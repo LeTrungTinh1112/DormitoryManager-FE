@@ -9,7 +9,7 @@ export interface Manager {
 export interface Room {
   id: string;
   name: string;
-  slug: string; // Add slug for routing consistency
+  slug: string;
   type: 'Standard' | 'Premium' | 'VIP';
   capacity: number;
   price: number;
@@ -20,8 +20,8 @@ export interface Room {
   totalBeds: number;
   availableBeds: number;
   soonBeds: number;
-  floor: number; // Add floor info since it was in names
-  image?: string; // Optional image URL
+  floor: number;
+  images: string[];
 }
 
 export const rooms: Room[] = [
@@ -40,7 +40,11 @@ export const rooms: Room[] = [
     availableBeds: 3,
     soonBeds: 1,
     floor: 1,
-    image: '/placeholder.svg'
+    images: [
+      'https://images.unsplash.com/photo-1631679706909-1844bbd07221?w=800&fit=crop',
+      'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&fit=crop',
+      'https://images.unsplash.com/photo-1600585152915-d208bec867a1?w=800&fit=crop',
+    ]
   },
   {
     id: 'standard-2',
@@ -57,7 +61,10 @@ export const rooms: Room[] = [
     availableBeds: 4,
     soonBeds: 0,
     floor: 2,
-    image: '/placeholder.svg'
+    images: [
+      'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&fit=crop',
+      'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&fit=crop',
+    ]
   },
   {
     id: 'standard-3',
@@ -74,7 +81,10 @@ export const rooms: Room[] = [
     availableBeds: 0,
     soonBeds: 2,
     floor: 3,
-    image: '/placeholder.svg'
+    images: [
+      'https://images.unsplash.com/photo-1631679706909-1844bbd07221?w=800&fit=crop',
+       'https://images.unsplash.com/photo-1600585152915-d208bec867a1?w=800&fit=crop',
+    ]
   },
   {
     id: 'standard-4',
@@ -91,7 +101,10 @@ export const rooms: Room[] = [
     availableBeds: 2,
     soonBeds: 0,
     floor: 4,
-    image: '/placeholder.svg'
+    images: [
+      'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&fit=crop',
+      'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&fit=crop',
+    ]
   },
   {
     id: 'premium-1',
@@ -103,12 +116,17 @@ export const rooms: Room[] = [
     status: 'available',
     manager: { name: 'Trần Thị B', phone: '0909 234 567' },
     description: 'Phòng Premium 2 người kết hợp tiện ích và thoải mái. Phòng có WC riêng, máy lạnh, không gian yên tĩnh để học tập và nghỉ ngơi.',
-    amenities: ['Máy lạnh', 'WC riêng', 'Wifi 100Mbps', 'Bàn học rộng', 'Tủ đồ riêng', 'Giường đơn', 'Gương soi'],
+    amenities: ['Máy lạnh', 'WC riêng', 'Wifi 100Mbps', 'Bàn học', 'Tủ đồ', 'Giường đôi', 'Bàn làm việc', 'Gương soi'],
     totalBeds: 2,
-    availableBeds: 1,
+    availableBeds: 2,
     soonBeds: 0,
     floor: 1,
-    image: '/placeholder.svg'
+    images: [
+      'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&fit=crop',
+      'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&fit=crop',
+      'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=800&fit=crop',
+      'https://images.unsplash.com/photo-1586105251261-72a756497a11?w=800&fit=crop',
+    ]
   },
   {
     id: 'premium-2',
@@ -119,13 +137,16 @@ export const rooms: Room[] = [
     price: 800000,
     status: 'available',
     manager: { name: 'Trần Thị B', phone: '0909 234 567' },
-    description: 'Phòng Premium cao cấp tại tầng 2, không gian riêng tư tối ưu.',
-    amenities: ['Máy lạnh', 'WC riêng', 'Wifi 100Mbps', 'Bàn học', 'Tủ đồ', 'Giường đơn'],
+    description: 'Phòng Premium tầng 2, gần lối đi chính, thuận tiện. Có cửa sổ lớn đón nắng.',
+    amenities: ['Máy lạnh', 'WC riêng', 'Wifi 100Mbps', 'Bàn học', 'Tủ đồ', 'Giường đôi', 'Cửa sổ lớn'],
     totalBeds: 2,
-    availableBeds: 2,
+    availableBeds: 1,
     soonBeds: 0,
     floor: 2,
-    image: '/placeholder.svg'
+    images: [
+      'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&fit=crop',
+      'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&fit=crop',
+    ]
   },
   {
     id: 'premium-3',
@@ -142,7 +163,9 @@ export const rooms: Room[] = [
     availableBeds: 0,
     soonBeds: 1,
     floor: 3,
-    image: '/placeholder.svg'
+    images: [
+        'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&fit=crop',
+    ]
   },
   {
     id: 'vip-1',
@@ -159,7 +182,11 @@ export const rooms: Room[] = [
     availableBeds: 1,
     soonBeds: 0,
     floor: 4,
-    image: '/placeholder.svg'
+    images: [
+      'https://images.unsplash.com/photo-1616594039964-ae9021a400a0?w=800&fit=crop',
+      'https://images.unsplash.com/photo-1615873968403-89e068629265?w=800&fit=crop',
+      'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&fit=crop',
+    ]
   },
   {
     id: 'vip-2',
@@ -170,12 +197,15 @@ export const rooms: Room[] = [
     price: 1200000,
     status: 'full',
     manager: { name: 'Lê Văn C', phone: '0910 345 678' },
-    description: 'Phòng VIP tầng thượng, view toàn cảnh thành phố.',
+    description: 'Phòng VIP góc tầng 5, 2 mặt thoáng, view thành phố cực đẹp.',
     amenities: ['Máy lạnh', 'WC riêng', 'Wifi 100Mbps', 'Bàn học', 'Tủ đồ', 'Đèn LED', 'Ban công riêng'],
     totalBeds: 1,
     availableBeds: 0,
     soonBeds: 0,
     floor: 5,
-    image: '/placeholder.svg'
-  },
+    images: [
+        'https://images.unsplash.com/photo-1616594039964-ae9021a400a0?w=800&fit=crop',
+        'https://images.unsplash.com/photo-1615873968403-89e068629265?w=800&fit=crop',
+    ]
+  }
 ];
