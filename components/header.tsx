@@ -3,21 +3,28 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { Menu, X, Heart, ArrowLeft } from 'lucide-react'
+import { Menu, X, Heart, ArrowLeft, RefreshCw } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { useFavorites } from '@/hooks/use-favorites'
 
 export function Header() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [showBackButton, setShowBackButton] = useState(false)
+  const [user, setUser] = useState<any>(null)
   const router = useRouter()
-  const { favorites } = useFavorites()
-  const count = favorites.length
+  const { count } = useFavorites()
 
   useEffect(() => {
     // Show back button on non-home pages
     setShowBackButton(typeof window !== 'undefined' && window.location.pathname !== '/')
+    fetch('/api/auth/me', { cache: 'no-store' })
+      .then(res => res.json())
+      .then(data => {
+        if(data.data) setUser(data.data)
+      })
+      .catch((_) => {})
   }, [])
+
 
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-border">
@@ -44,45 +51,70 @@ export function Header() {
             </Link>
           </div>
 
-          {/* Desktop Menu */}
+          {/* Desktop Menu - Simplified Public */}
           <nav className="hidden md:flex items-center gap-8">
-            <Link href="/" className="text-foreground hover:text-primary transition-colors">
+            <Link href="/" className="text-foreground hover:text-primary transition-colors font-medium">
               Trang chủ
             </Link>
-            <Link href="/rooms" className="text-foreground hover:text-primary transition-colors">
+            <Link href="/rooms" className="text-foreground hover:text-primary transition-colors font-medium">
               Phòng
             </Link>
-            <Link href="/pricing" className="text-foreground hover:text-primary transition-colors">
+            <Link href="/pricing" className="text-foreground hover:text-primary transition-colors font-medium">
               Bảng giá
             </Link>
-            <Link href="/contact" className="text-foreground hover:text-primary transition-colors">
-              Liên hệ
+            <Link href="/promotions" className="text-foreground hover:text-primary transition-colors font-medium">
+              Khuyến mãi
+            </Link>
+            <Link href="/faq" className="text-foreground hover:text-primary transition-colors font-medium">
+              FAQ
             </Link>
           </nav>
 
-          {/* CTA Button & Favorites - Desktop */}
-          <div className="hidden md:flex items-center gap-4">
-            <Button
-              asChild
-              variant="ghost"
-              className="text-foreground hover:text-primary relative"
-            >
-              <Link href="/favorites" className="flex items-center gap-2">
-                <Heart size={20} />
-                <span>Yêu thích</span>
-                {count > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-primary text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                    {count > 99 ? '99+' : count}
-                  </span>
-                )}
-              </Link>
-            </Button>
-            <Button
-              asChild
-              className="bg-primary hover:bg-[#922d28] text-white rounded-full"
-            >
-              <Link href="/rooms">Xem phòng trống</Link>
-            </Button>
+          {/* CTA Buttons - Desktop */}
+          <div className="hidden md:flex items-center gap-3">
+            {user ? (
+              <>
+                {/* Favorites Button */}
+                <Button
+                  asChild
+                  variant="ghost"
+                  className="text-foreground relative"
+                >
+                  <Link href="/dashboard/favorites" className="flex items-center gap-2">
+                    <Heart size={20} />
+                    <span className="text-sm">Yêu thích</span>
+                    {count > 0 && (
+                      <span className="absolute -top-1 -right-1 bg-primary hover:bg-[#922d28] text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                        {count > 99 ? '99+' : count}
+                      </span>
+                    )}
+                  </Link>
+                </Button>
+                {/* Dashboard Button */}
+                <Button
+                  asChild
+                  className="bg-primary hover:bg-[#922d28] text-white text-sm"
+                >
+                  <Link href="/dashboard">Chào, {user.name.split(' ').pop()}</Link>
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  asChild
+                  className="bg-primary hover:bg-[#922d28] text-white"
+                >
+                  <Link href="/auth/login">Đăng nhập</Link>
+                </Button>
+                <Button
+                  asChild
+                  variant="outline"
+                  className="border-primary text-primary hover:bg-primary/5 bg-transparent"
+                >
+                  <Link href="/auth/register">Đăng ký</Link>
+                </Button>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -94,51 +126,77 @@ export function Header() {
           </button>
         </div>
 
-        {/* Mobile Menu */}
+        {/* Mobile Menu - Simplified Public */}
         {mobileOpen && (
-          <nav className="md:hidden pb-4 space-y-3">
+          <nav className="md:hidden pb-4 space-y-2">
             <Link
               href="/"
-              className="block text-foreground hover:text-primary transition-colors py-2"
+              className="block text-foreground hover:text-primary transition-colors py-2 font-medium"
             >
               Trang chủ
             </Link>
             <Link
               href="/rooms"
-              className="block text-foreground hover:text-primary transition-colors py-2"
+              className="block text-foreground hover:text-primary transition-colors py-2 font-medium"
             >
               Phòng
             </Link>
             <Link
               href="/pricing"
-              className="block text-foreground hover:text-primary transition-colors py-2"
+              className="block text-foreground hover:text-primary transition-colors py-2 font-medium"
             >
               Bảng giá
             </Link>
             <Link
-              href="/contact"
-              className="block text-foreground hover:text-primary transition-colors py-2"
+              href="/promotions"
+              className="block text-foreground hover:text-primary transition-colors py-2 font-medium"
             >
-              Liên hệ
+              Khuyến mãi
             </Link>
             <Link
-              href="/favorites"
-              className="block text-foreground hover:text-primary transition-colors py-2 flex items-center gap-2 relative"
+              href="/faq"
+              className="block text-foreground hover:text-primary transition-colors py-2 font-medium"
             >
-              <Heart size={20} />
-              <span>Yêu thích</span>
-              {count > 0 && (
-                <span className="ml-auto bg-primary text-white text-xs font-bold rounded-full px-2 py-0.5">
-                  {count}
-                </span>
-              )}
+              FAQ
             </Link>
-            <Button
-              asChild
-              className="w-full bg-primary hover:bg-[#922d28] text-white"
-            >
-              <Link href="/rooms">Xem phòng trống</Link>
-            </Button>
+            <div className="space-y-2 pt-4 border-t border-border">
+              {user ? (
+                <>
+                  <Button
+                    asChild
+                    variant="ghost"
+                    className="w-full justify-start text-foreground hover:text-primary gap-2"
+                  >
+                    <Link href="/dashboard/favorites" className="flex items-center">
+                      <Heart size={18} />
+                      <span>Yêu thích {count > 0 && `(${count})`}</span>
+                    </Link>
+                  </Button>
+                  <Button
+                    asChild
+                    className="w-full bg-primary hover:bg-[#922d28] text-white"
+                  >
+                    <Link href="/dashboard">Chào, {user.name.trim().split(' ').pop()}</Link>
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    asChild
+                    className="w-full bg-primary hover:bg-[#922d28] text-white"
+                  >
+                    <Link href="/auth/login">Đăng nhập</Link>
+                  </Button>
+                  <Button
+                    asChild
+                    variant="outline"
+                    className="w-full border-primary text-primary hover:bg-primary/5 bg-transparent"
+                  >
+                    <Link href="/auth/register">Đăng ký</Link>
+                  </Button>
+                </>
+              )}
+            </div>
           </nav>
         )}
       </div>

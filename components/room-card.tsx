@@ -1,7 +1,5 @@
 'use client'
 
-import React from "react"
-
 import Link from 'next/link'
 import Image from 'next/image'
 import { Badge } from '@/components/ui/badge'
@@ -50,27 +48,29 @@ export function RoomCard({
   }
 
   return (
-    <Link href={`/rooms/${id}`} className="relative bg-white border border-border rounded-lg overflow-hidden hover:shadow-lg transition-shadow h-full cursor-pointer">
+    <div className="group relative bg-white border border-border rounded-lg overflow-hidden hover:shadow-lg transition-shadow h-full flex flex-col">
       {/* Image */}
       <div className="relative w-full h-48 bg-card overflow-hidden">
-        {image ? (
-          <Image
-            src={image || "/placeholder.svg"}
-            alt={name}
-            fill
-            className="object-cover hover:scale-105 transition-transform"
-          />
-        ) : (
-          <div className="w-full h-full bg-card flex items-center justify-center text-muted-foreground">
-            <Eye size={32} />
-          </div>
-        )}
+        <Link href={`/rooms/${id}`} className="block w-full h-full relative">
+          {image ? (
+            <Image
+              src={image || "/placeholder.svg"}
+              alt={name}
+              fill
+              className="object-cover group-hover:scale-105 transition-transform"
+            />
+          ) : (
+            <div className="w-full h-full bg-card flex items-center justify-center text-muted-foreground">
+              <Eye size={32} />
+            </div>
+          )}
+        </Link>
 
         {/* Favorite Button */}
         {isLoaded && (
           <button
             onClick={handleFavoriteClick}
-            className="absolute top-3 right-3 bg-white rounded-full p-2 shadow-md hover:shadow-lg transition-all"
+            className="absolute top-3 right-3 bg-white rounded-full p-2 shadow-md hover:shadow-lg transition-all z-10"
             aria-label={isFav ? 'Bỏ yêu thích' : 'Thêm vào yêu thích'}
           >
             <Heart
@@ -84,14 +84,14 @@ export function RoomCard({
       </div>
 
       {/* Content */}
-      <div className="p-4 space-y-3">
+      <div className="p-4 space-y-3 flex-1 flex flex-col">
         {/* Header */}
-        <div>
-          <h3 className="font-semibold text-foreground text-lg line-clamp-2">
+        <Link href={`/rooms/${id}`} className="block">
+          <h3 className="font-semibold text-foreground text-lg line-clamp-2 group-hover:text-primary transition-colors">
             {name}
           </h3>
           <p className="text-sm text-muted-foreground">{type}</p>
-        </div>
+        </Link>
 
         {/* Info Grid */}
         <div className="flex items-center gap-4 text-sm text-muted-foreground">
@@ -102,12 +102,12 @@ export function RoomCard({
         </div>
 
         {/* Status Badge */}
-        <Badge className={`${statusInfo.color} border-0`}>
+        <Badge className={`${statusInfo.color} border-0 w-fit`}>
           {statusInfo.label}
         </Badge>
 
         {/* Price */}
-        <div className="pt-2 border-t border-border">
+        <div className="pt-2 border-t border-border mt-auto">
           <p className="text-2xl font-bold text-primary mb-2">
             {price.toLocaleString('vi-VN')}đ
           </p>
@@ -128,9 +128,11 @@ export function RoomCard({
           asChild
           className="w-full bg-primary hover:bg-[#922d28] text-white mt-4"
         >
-          Xem chi tiết
+          <Link href={`/rooms/${id}`}>
+            Xem chi tiết
+          </Link>
         </Button>
       </div>
-    </Link>
+    </div>
   )
 }
