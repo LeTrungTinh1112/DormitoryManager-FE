@@ -10,10 +10,12 @@ import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { useToast } from '@/hooks/use-toast'
 import { Eye, EyeOff } from 'lucide-react'
 
 export default function RegisterPage() {
   const router = useRouter()
+  const { toast } = useToast()
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -87,7 +89,7 @@ export default function RegisterPage() {
     if (!validateForm()) return
 
     setIsLoading(true)
-    
+
     try {
       const response = await fetch('/api/auth/register', {
         method: 'POST',
@@ -100,15 +102,26 @@ export default function RegisterPage() {
       const data = await response.json();
 
       if (response.ok) {
-        alert('Đăng ký thành công! Vui lòng đăng nhập.');
+        toast({
+          title: 'Đăng ký thành công',
+          description: 'Vui lòng đăng nhập.',
+        });
         router.push('/auth/login');
       } else {
         setErrors(prev => ({ ...prev, apiError: data.error || 'Đăng ký thất bại' }));
-        alert(data.error || 'Đăng ký thất bại');
+        toast({
+          variant: 'destructive',
+          title: 'Đăng ký thất bại',
+          description: data.error || 'Đăng ký thất bại',
+        });
       }
     } catch (error) {
       console.error('Registration failed:', error);
-      alert('Đã xảy ra lỗi khi kết nối đến máy chủ');
+      toast({
+        variant: 'destructive',
+        title: 'Lỗi',
+        description: 'Đã xảy ra lỗi khi kết nối đến máy chủ',
+      });
     } finally {
       setIsLoading(false)
     }
@@ -142,9 +155,8 @@ export default function RegisterPage() {
                 value={formData.fullName}
                 onChange={handleChange}
                 placeholder="Nguyễn Văn A"
-                className={`bg-card border-border focus:ring-primary ${
-                  errors.fullName ? 'border-red-500' : ''
-                }`}
+                className={`bg-card border-border focus:ring-primary ${errors.fullName ? 'border-red-500' : ''
+                  }`}
               />
               {errors.fullName && <p className="text-sm text-red-500">{errors.fullName}</p>}
             </div>
@@ -162,9 +174,8 @@ export default function RegisterPage() {
                   value={formData.email}
                   onChange={handleChange}
                   placeholder="example@gmail.com"
-                  className={`bg-card border-border focus:ring-primary ${
-                    errors.email ? 'border-red-500' : ''
-                  }`}
+                  className={`bg-card border-border focus:ring-primary ${errors.email ? 'border-red-500' : ''
+                    }`}
                 />
                 {errors.email && <p className="text-sm text-red-500">{errors.email}</p>}
               </div>
@@ -179,9 +190,8 @@ export default function RegisterPage() {
                   value={formData.phone}
                   onChange={handleChange}
                   placeholder="0123456789"
-                  className={`bg-card border-border focus:ring-primary ${
-                    errors.phone ? 'border-red-500' : ''
-                  }`}
+                  className={`bg-card border-border focus:ring-primary ${errors.phone ? 'border-red-500' : ''
+                    }`}
                 />
                 {errors.phone && <p className="text-sm text-red-500">{errors.phone}</p>}
               </div>
@@ -201,9 +211,8 @@ export default function RegisterPage() {
                     value={formData.password}
                     onChange={handleChange}
                     placeholder="••••••••"
-                    className={`pr-10 bg-card border-border focus:ring-primary ${
-                      errors.password ? 'border-red-500' : ''
-                    }`}
+                    className={`pr-10 bg-card border-border focus:ring-primary ${errors.password ? 'border-red-500' : ''
+                      }`}
                   />
                   <button
                     type="button"
@@ -227,9 +236,8 @@ export default function RegisterPage() {
                     value={formData.confirmPassword}
                     onChange={handleChange}
                     placeholder="••••••••"
-                    className={`pr-10 bg-card border-border focus:ring-primary ${
-                      errors.confirmPassword ? 'border-red-500' : ''
-                    }`}
+                    className={`pr-10 bg-card border-border focus:ring-primary ${errors.confirmPassword ? 'border-red-500' : ''
+                      }`}
                   />
                   <button
                     type="button"

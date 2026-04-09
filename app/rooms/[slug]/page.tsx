@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge'
 import { RoomCard } from '@/components/room-card'
 import { ImageSlideshow } from '@/components/image-slideshow'
 import { useFavorites } from '@/hooks/use-favorites'
+import { useToast } from '@/hooks/use-toast'
 import {
   AirVent,
   Wifi,
@@ -122,7 +123,7 @@ const roomDetails: Record<
     totalBeds: 2,
     availableBeds: 2,
     soonBeds: 0,
-      images: [
+    images: [
       'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267',
       'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2',
       'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85',
@@ -186,6 +187,7 @@ interface RoomDetailPageProps {
 }
 
 export default function RoomDetailPage({ params }: RoomDetailPageProps) {
+  const { toast } = useToast();
   const { slug } = React.use(params)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const room = roomDetails[slug] || roomDetails['vip-1']
@@ -199,7 +201,10 @@ export default function RoomDetailPage({ params }: RoomDetailPageProps) {
     // Simulate API call
     await new Promise((resolve) => setTimeout(resolve, 1000))
     setIsSubmitting(false)
-    alert('Yêu cầu của bạn đã được gửi. Chúng tôi sẽ liên hệ sớm nhất!')
+    toast({
+      title: 'Đăng ký phòng thành công',
+      description: 'Yêu cầu của bạn đã được gửi. Chúng tôi sẽ liên hệ sớm nhất!',
+    })
   }
 
   return (
@@ -243,9 +248,8 @@ export default function RoomDetailPage({ params }: RoomDetailPageProps) {
                   >
                     <Heart
                       size={28}
-                      className={`transition-colors ${
-                        isFav ? 'fill-primary text-primary' : 'text-gray-400'
-                      }`}
+                      className={`transition-colors ${isFav ? 'fill-primary text-primary' : 'text-gray-400'
+                        }`}
                     />
                   </button>
                 )}

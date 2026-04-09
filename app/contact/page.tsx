@@ -6,9 +6,11 @@ import { useState } from 'react'
 import { Header } from '@/components/header'
 import { Footer } from '@/components/footer'
 import { Button } from '@/components/ui/button'
+import { useToast } from '@/hooks/use-toast'
 import { Phone, Mail, MapPin, Clock } from 'lucide-react'
 
 export default function ContactPage() {
+  const { toast } = useToast()
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -16,8 +18,11 @@ export default function ContactPage() {
     setIsSubmitting(true)
     await new Promise((resolve) => setTimeout(resolve, 1000))
     setIsSubmitting(false)
-    alert('Cảm ơn bạn đã liên hệ! Chúng tôi sẽ trả lời sớm nhất!')
-    ;(e.target as HTMLFormElement).reset()
+    toast({
+      title: 'Gửi thành công',
+      description: 'Cảm ơn bạn đã liên hệ! Chúng tôi sẽ trả lời sớm nhất!',
+    })
+      ; (e.target as HTMLFormElement).reset()
   }
 
   return (

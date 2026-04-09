@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { useToast } from '@/hooks/use-toast'
 import { CreditCard, Download, Phone, Zap, Droplets, Wifi, AlertCircle } from 'lucide-react'
 
 // Define Payment interface matching API
@@ -17,6 +18,7 @@ interface Payment {
 }
 
 export default function PaymentPage() {
+  const { toast } = useToast()
   const [selectedMethod, setSelectedMethod] = useState('bank')
   const [isProcessing, setIsProcessing] = useState(false)
   const [paymentStatus, setPaymentStatus] = useState<'idle' | 'success'>('idle')
@@ -71,7 +73,7 @@ export default function PaymentPage() {
       setDiscountError('Vui lòng nhập mã giảm giá')
       return;
     }
-    
+
     setIsApplyingDiscount(true)
     setDiscountError('')
     try {
@@ -83,7 +85,7 @@ export default function PaymentPage() {
           discountCode: discountCodeInput.trim()
         })
       })
-      
+
       const result = await res.json()
       if (res.ok && result.success) {
         // Refetch to get updated amounts
@@ -100,7 +102,11 @@ export default function PaymentPage() {
 
   const handlePayment = async () => {
     if (selectedMethod === 'bank' && !proofImage) {
-      alert('Vui lòng tải lên minh chứng thanh toán ngân hàng.');
+      toast({
+        variant: 'destructive',
+        title: 'Thiếu minh chứng',
+        description: 'Vui lòng tải lên minh chứng thanh toán ngân hàng.',
+      });
       return;
     }
     setIsProcessing(true)
@@ -132,26 +138,26 @@ export default function PaymentPage() {
   }
 
   if (isLoading) {
-      return <div className="min-h-screen flex items-center justify-center">Đang tải...</div>
+    return <div className="min-h-screen flex items-center justify-center">Đang tải...</div>
   }
 
   if (!currentInvoice && paymentStatus !== 'success') {
-      return (
-        <main className="min-h-screen flex flex-col bg-white">
-          <div className="flex-1 flex items-center justify-center px-4 py-12">
-            <div className="text-center">
-                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <AlertCircle className="text-green-600" size={32} />
-                </div>
-                <h2 className="text-xl font-bold text-foreground">Không có hóa đơn cần thanh toán</h2>
-                <p className="text-muted-foreground mt-2">Bạn đã hoàn thành tất cả nghĩa vụ tài chính.</p>
-                <Button asChild className="mt-6" variant="outline">
-                    <Link href="/dashboard">Về trang chủ</Link>
-                </Button>
+    return (
+      <main className="min-h-screen flex flex-col bg-white">
+        <div className="flex-1 flex items-center justify-center px-4 py-12">
+          <div className="text-center">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <AlertCircle className="text-green-600" size={32} />
             </div>
+            <h2 className="text-xl font-bold text-foreground">Không có hóa đơn cần thanh toán</h2>
+            <p className="text-muted-foreground mt-2">Bạn đã hoàn thành tất cả nghĩa vụ tài chính.</p>
+            <Button asChild className="mt-6" variant="outline">
+              <Link href="/dashboard">Về trang chủ</Link>
+            </Button>
           </div>
-        </main>
-      )
+        </div>
+      </main>
+    )
   }
 
   if (paymentStatus === 'success') {
@@ -277,15 +283,15 @@ export default function PaymentPage() {
                   <div className="pt-4 border-t border-border mt-4">
                     <label className="text-sm font-medium text-foreground mb-2 block">Mã giảm giá</label>
                     <div className="flex gap-2">
-                      <input 
-                        type="text" 
-                        placeholder="Nhập mã giảm giá" 
+                      <input
+                        type="text"
+                        placeholder="Nhập mã giảm giá"
                         value={discountCodeInput}
                         onChange={(e) => setDiscountCodeInput(e.target.value)}
                         className="flex-1 px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                       />
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         onClick={handleApplyDiscount}
                         disabled={isApplyingDiscount}
                       >
@@ -306,11 +312,10 @@ export default function PaymentPage() {
                   {/* Bank Transfer */}
                   <button
                     onClick={() => setSelectedMethod('bank')}
-                    className={`w-full p-4 rounded-lg border-2 transition-all text-left ${
-                      selectedMethod === 'bank'
+                    className={`w-full p-4 rounded-lg border-2 transition-all text-left ${selectedMethod === 'bank'
                         ? 'border-primary bg-primary/5'
                         : 'border-border bg-white hover:bg-primary/5'
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center gap-3">
                       <CreditCard size={24} className={selectedMethod === 'bank' ? 'text-primary' : 'text-muted-foreground'} />
@@ -324,11 +329,10 @@ export default function PaymentPage() {
                   {/* QR Payment */}
                   <button
                     onClick={() => setSelectedMethod('qr')}
-                    className={`w-full p-4 rounded-lg border-2 transition-all text-left ${
-                      selectedMethod === 'qr'
+                    className={`w-full p-4 rounded-lg border-2 transition-all text-left ${selectedMethod === 'qr'
                         ? 'border-primary bg-primary/5'
                         : 'border-border bg-white hover:bg-primary/5'
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center gap-3">
                       <div className="w-6 h-6 border-2 border-current rounded-sm shrink-0" />
@@ -342,11 +346,10 @@ export default function PaymentPage() {
                   {/* E-Wallet */}
                   <button
                     onClick={() => setSelectedMethod('wallet')}
-                    className={`w-full p-4 rounded-lg border-2 transition-all text-left ${
-                      selectedMethod === 'wallet'
+                    className={`w-full p-4 rounded-lg border-2 transition-all text-left ${selectedMethod === 'wallet'
                         ? 'border-primary bg-primary/5'
                         : 'border-border bg-white hover:bg-primary/5'
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center gap-3">
                       <CreditCard size={24} className={selectedMethod === 'wallet' ? 'text-primary' : 'text-muted-foreground'} />
@@ -360,11 +363,10 @@ export default function PaymentPage() {
                   {/* Counter Payment */}
                   <button
                     onClick={() => setSelectedMethod('counter')}
-                    className={`w-full p-4 rounded-lg border-2 transition-all text-left ${
-                      selectedMethod === 'counter'
+                    className={`w-full p-4 rounded-lg border-2 transition-all text-left ${selectedMethod === 'counter'
                         ? 'border-primary bg-primary/5'
                         : 'border-border bg-white hover:bg-primary/5'
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center gap-3">
                       <CreditCard size={24} className={selectedMethod === 'counter' ? 'text-primary' : 'text-muted-foreground'} />
@@ -394,8 +396,8 @@ export default function PaymentPage() {
               {/* Upload Proof */}
               <div className="bg-card border border-border rounded-lg p-4">
                 <label className="block text-sm font-semibold text-foreground mb-2">Tải lên minh chứng thanh toán</label>
-                <input 
-                  type="file" 
+                <input
+                  type="file"
                   accept="image/*"
                   onChange={(e) => {
                     const file = e.target.files?.[0];
