@@ -662,6 +662,12 @@ export const addContract = async (contract: Omit<Contract, 'id'>) => {
   return newContract;
 }
 
+export const deleteContract = async (id: string) => {
+  const contracts = global.mockContractsStore || [];
+  global.mockContractsStore = contracts.filter(c => c.id !== id);
+  return true;
+}
+
 export const updateContract = async (id: string, updates: Partial<Contract>) => {
   const contracts = global.mockContractsStore || [];
   const index = contracts.findIndex(c => c.id === id);

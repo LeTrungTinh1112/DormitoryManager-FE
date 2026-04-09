@@ -15,6 +15,13 @@ import {
   MapPin,
   DollarSign,
 } from 'lucide-react'
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from '@/components/ui/carousel'
 
 // Mock data - replace with API calls later
 const featuredRooms = [
@@ -25,6 +32,7 @@ const featuredRooms = [
     capacity: 4,
     price: 500000,
     status: 'available' as const,
+    image: 'https://images.unsplash.com/photo-1631679706909-1844bbd07221?w=500&h=300&fit=crop',
     manager: { name: 'Nguyễn Văn A', phone: '0908 123 456' },
   },
   {
@@ -34,6 +42,7 @@ const featuredRooms = [
     capacity: 2,
     price: 800000,
     status: 'available' as const,
+    image: 'https://images.unsplash.com/photo-1631679706909-1844bbd07221?w=500&h=300&fit=crop',
     manager: { name: 'Trần Thị B', phone: '0909 234 567' },
   },
   {
@@ -43,6 +52,7 @@ const featuredRooms = [
     capacity: 1,
     price: 1200000,
     status: 'soon' as const,
+    image: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=500&h=300&fit=crop',
     manager: { name: 'Lê Văn C', phone: '0910 345 678' },
   },
   {
@@ -52,6 +62,7 @@ const featuredRooms = [
     capacity: 4,
     price: 500000,
     status: 'available' as const,
+    image: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=500&h=300&fit=crop',
     manager: { name: 'Phạm Thị D', phone: '0911 456 789' },
   },
 ]
@@ -71,10 +82,53 @@ const amenities = [
   },
 ]
 
-const pricingTable = [
-  { type: 'Standard', capacity: '4 người', price: '500.000đ/tháng' },
-  { type: 'Premium', capacity: '2 người', price: '800.000đ/tháng' },
-  { type: 'VIP', capacity: '1 người', price: '1.200.000đ/tháng' },
+const faqs = [
+  {
+    question: 'Giá thuê có bao gồm các dịch vụ khác không?',
+    answer:
+      'Giá thuê phòng bao gồm: nước, điện, wifi, dịch vụ vệ sinh. Các dịch vụ khác như giặt giũ phụ thu thêm.',
+  },
+  {
+    question: 'Thời hạn hợp đồng tối thiểu là bao lâu?',
+    answer: 'Thời hạn hợp đồng tối thiểu là 6 tháng. Chúng tôi cũng linh hoạt với các yêu cầu cụ thể.',
+  },
+  {
+    question: 'Có cần đặt cọc không?',
+    answer:
+      'Có, bạn cần đặt cọc 1 tháng tiền thuê. Khoản cọc này sẽ được hoàn lại sau khi kết thúc hợp đồng.',
+  },
+  {
+    question: 'Có được phép mang theo vật nuôi không?',
+    answer: 'Không được mang theo vật nuôi theo chính sách của KTX để đảm bảo vệ sinh chung.',
+  },
+  {
+    question: 'Phòng có thể được sơn hoặc trang trí không?',
+    answer:
+      'Có thể trang trí nhẹ nhàng nhưng không được thay đổi cấu trúc. Tất cả phải được phục hồi trước khi trả phòng.',
+  },
+  {
+    question: 'Làm thế nào để đặt phòng?',
+    answer:
+      'Bạn có thể đặt phòng qua website hoặc liên hệ trực tiếp với quản lý phòng. Chúng tôi cũng hỗ trợ qua điện thoại.',
+  },
+]
+
+const slideshowImages = [
+  {
+    src: 'https://images.unsplash.com/photo-1555854877-bab0e564b8d5?q=80&w=2069&auto=format&fit=crop',
+    alt: 'Standard - Tiêu chuẩn',
+    title: 'Standard - Tiêu chuẩn',
+  },
+  {
+    src: 'https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?q=80&w=2070&auto=format&fit=crop',
+    alt: 'Premium',
+    title: 'Premium',
+  },
+  {
+    src: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?q=80&w=2070&auto=format&fit=crop',
+    alt: 'VIP',
+    title: 'VIP',
+  },
 ]
 
 export default function Home() {
@@ -103,7 +157,7 @@ export default function Home() {
                   size="lg"
                   className="bg-primary hover:bg-[#922d28] text-white rounded-full"
                 >
-                  <Link href="/rooms">Xem phòng</Link>
+                  <Link href="/register">Đăng ký thuê phòng nhanh</Link>
                 </Button>
                 <Button
                   asChild
@@ -111,7 +165,7 @@ export default function Home() {
                   variant="outline"
                   className="border-primary text-primary hover:bg-primary/5 rounded-full bg-transparent"
                 >
-                  <Link href="/contact">Liên hệ tư vấn</Link>
+                  <Link href="/rooms">Xem phòng</Link>
                 </Button>
               </div>
 
@@ -119,10 +173,10 @@ export default function Home() {
               <div className="grid grid-cols-3 gap-4 pt-8 border-t border-border">
                 <div>
                   <p className="text-2xl font-bold text-primary">150+</p>
-                  <p className="text-sm text-muted-foreground">Phòng trống</p>
+                  <p className="text-sm text-muted-foreground">Phòng</p>
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-primary">4.8★</p>
+                  <p className="text-2xl font-bold text-primary">4.8</p>
                   <p className="text-sm text-muted-foreground">Đánh giá</p>
                 </div>
                 <div>
@@ -148,7 +202,7 @@ export default function Home() {
       </section>
 
       {/* Amenities Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-card">
+      <section className="py-8 px-4 sm:px-6 lg:px-8 bg-card">
         <div className="max-w-7xl mx-auto">
           <h2 className="text-3xl font-bold text-foreground text-center mb-12">
             Giới thiệu nhanh KTX
@@ -169,8 +223,47 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Room Slideshow */}
+      <section className="py-8 px-4 sm:px-6 lg:px-8 bg-white">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-10">
+            <h2 className="text-3xl font-bold text-foreground mb-4">
+              Loại phòng ký túc xá
+            </h2>
+          </div>
+          
+          <Carousel className="w-full max-w-5xl mx-auto">
+            <CarouselContent>
+              {slideshowImages.map((image, index) => (
+                <CarouselItem key={index}>
+                  <div className="p-1">
+                    <div className="relative aspect-[16/9] w-full overflow-hidden rounded-xl border border-border bg-muted">
+                      <Image
+                        src={image.src}
+                        alt={image.alt}
+                        fill
+                        className="object-cover transition-transform hover:scale-105 duration-500"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
+                      />
+                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-6 flex items-end justify-between">
+                        <h3 className="text-xl font-bold text-white">{image.title}</h3>
+                        <Button asChild size="sm" className="bg-white text-primary hover:bg-white/90 border-0 pointer-events-auto">
+                          <Link href="/pricing">Xem chi tiết</Link>
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            <CarouselPrevious />
+            <CarouselNext />
+          </Carousel>
+        </div>
+      </section>
+
       {/* Featured Rooms */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8">
+      <section className="py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="flex justify-between items-center mb-12">
             <h2 className="text-3xl font-bold text-foreground">Phòng nổi bật</h2>
@@ -190,43 +283,30 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Pricing Table */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-card">
-        <div className="max-w-7xl mx-auto">
+      {/* FAQ Section */}
+      <section className="py-8 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-3xl mx-auto">
           <h2 className="text-3xl font-bold text-foreground mb-12 text-center">
-            Bảng giá tham khảo
+            Câu hỏi thường gặp
           </h2>
 
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b-2 border-primary">
-                  <th className="text-left py-4 px-4 font-semibold text-foreground">
-                    Loại phòng
-                  </th>
-                  <th className="text-left py-4 px-4 font-semibold text-foreground">
-                    Sức chứa
-                  </th>
-                  <th className="text-left py-4 px-4 font-semibold text-foreground">
-                    Giá
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {pricingTable.map((item, index) => (
-                  <tr
-                    key={index}
-                    className={`border-b border-border ${
-                      index % 2 === 0 ? 'bg-white' : 'bg-secondary'
-                    } hover:bg-primary/5 transition-colors`}
-                  >
-                    <td className="py-4 px-4 font-medium text-foreground">{item.type}</td>
-                    <td className="py-4 px-4 text-muted-foreground">{item.capacity}</td>
-                    <td className="py-4 px-4 font-semibold text-primary">{item.price}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="space-y-6">
+            {faqs.map((faq, index) => (
+              <details
+                key={index}
+                className="group border border-border rounded-lg overflow-hidden"
+              >
+                <summary className="flex cursor-pointer items-center justify-between bg-card p-6 font-semibold text-foreground hover:bg-primary/5 transition-colors">
+                  <span>{faq.question}</span>
+                  <span className="ml-4 text-primary group-open:rotate-180 transition-transform">
+                    ▼
+                  </span>
+                </summary>
+                <div className="border-t border-border bg-white px-6 py-4 text-muted-foreground">
+                  {faq.answer}
+                </div>
+              </details>
+            ))}
           </div>
         </div>
       </section>

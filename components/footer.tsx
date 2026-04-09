@@ -7,7 +7,7 @@ export function Footer() {
   const currentYear = new Date().getFullYear()
 
   return (
-    <footer className="bg-foreground text-white py-12 mt-20">
+    <footer className="bg-foreground text-white py-12 mt-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
           {/* About */}
@@ -43,8 +43,13 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/contact" className="hover:text-primary transition-colors">
-                  Liên hệ
+                <Link href="/promotions" className="hover:text-primary transition-colors">
+                  Khuyến mãi
+                </Link>
+              </li>
+              <li>
+                <Link href="/faq" className="hover:text-primary transition-colors">
+                  FAQ
                 </Link>
               </li>
             </ul>

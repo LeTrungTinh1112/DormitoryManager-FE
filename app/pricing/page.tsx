@@ -74,37 +74,6 @@ const comparisonTable = [
   { feature: 'An ninh 24/7', standard: '✓', premium: '✓', vip: '✓' },
 ]
 
-const faqs = [
-  {
-    question: 'Giá thuê có bao gồm các dịch vụ khác không?',
-    answer:
-      'Giá thuê phòng bao gồm: nước, điện, wifi, dịch vụ vệ sinh. Các dịch vụ khác như giặt giũ phụ thu thêm.',
-  },
-  {
-    question: 'Thời hạn hợp đồng tối thiểu là bao lâu?',
-    answer: 'Thời hạn hợp đồng tối thiểu là 6 tháng. Chúng tôi cũng linh hoạt với các yêu cầu cụ thể.',
-  },
-  {
-    question: 'Có cần đặt cọc không?',
-    answer:
-      'Có, bạn cần đặt cọc 1 tháng tiền thuê. Khoản cọc này sẽ được hoàn lại sau khi kết thúc hợp đồng.',
-  },
-  {
-    question: 'Có được phép mang theo vật nuôi không?',
-    answer: 'Không được mang theo vật nuôi theo chính sách của KTX để đảm bảo vệ sinh chung.',
-  },
-  {
-    question: 'Phòng có thể được sơn hoặc trang trí không?',
-    answer:
-      'Có thể trang trí nhẹ nhàng nhưng không được thay đổi cấu trúc. Tất cả phải được phục hồi trước khi trả phòng.',
-  },
-  {
-    question: 'Làm thế nào để đặt phòng?',
-    answer:
-      'Bạn có thể đặt phòng qua website hoặc liên hệ trực tiếp với quản lý phòng. Chúng tôi cũng hỗ trợ qua điện thoại.',
-  },
-]
-
 export default function PricingPage() {
   const [searchQuery, setSearchQuery] = useState<string>('')
 
@@ -145,6 +114,7 @@ export default function PricingPage() {
           <div className="relative max-w-2xl mx-auto">
             <Search className="absolute left-3 top-3 text-muted-foreground" size={20} />
             <input
+              suppressHydrationWarning
               type="text"
               placeholder="Tìm kiếm loại phòng, tiện nghi, sức chứa..."
               value={searchQuery}
@@ -208,7 +178,7 @@ export default function PricingPage() {
                     <ul className="space-y-3 flex-1">
                       {tier.features.map((feature) => (
                         <li key={feature} className="flex items-start gap-3">
-                          <Check size={20} className="text-primary flex-shrink-0 mt-0.5" />
+                          <Check size={20} className="text-primary shrink-0 mt-0.5" />
                           <span className="text-sm text-foreground">{feature}</span>
                         </li>
                       ))}
@@ -220,7 +190,7 @@ export default function PricingPage() {
                       className={`w-full h-12 font-semibold ${
                         tier.popular
                           ? 'bg-primary hover:bg-[#922d28] text-white'
-                          : 'border-primary text-primary hover:bg-primary/5'
+                          : 'border-primary text-primary hover:bg-[#922d28]'
                       }`}
                       variant={tier.popular ? 'default' : 'outline'}
                     >
@@ -280,32 +250,7 @@ export default function PricingPage() {
       </section>
 
       {/* FAQ Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-3xl mx-auto">
-          <h2 className="text-3xl font-bold text-foreground mb-12 text-center">
-            Câu hỏi thường gặp
-          </h2>
-
-          <div className="space-y-6">
-            {faqs.map((faq, index) => (
-              <details
-                key={index}
-                className="group border border-border rounded-lg overflow-hidden"
-              >
-                <summary className="flex cursor-pointer items-center justify-between bg-card p-6 font-semibold text-foreground hover:bg-primary/5 transition-colors">
-                  <span>{faq.question}</span>
-                  <span className="ml-4 text-primary group-open:rotate-180 transition-transform">
-                    ▼
-                  </span>
-                </summary>
-                <div className="border-t border-border bg-white px-6 py-4 text-muted-foreground">
-                  {faq.answer}
-                </div>
-              </details>
-            ))}
-          </div>
-        </div>
-      </section>
+      
 
       {/* CTA Section */}
       <section className="py-16 px-4 sm:px-6 lg:px-8 bg-primary text-white">
@@ -318,9 +263,9 @@ export default function PricingPage() {
             <Button
               asChild
               size="lg"
-              className="bg-white text-primary hover:bg-gray-100"
+              className="bg-white text-primary hover:bg-gray-100 font-semibold"
             >
-              <Link href="/rooms">Duyệt phòng trống</Link>
+              <Link href="/register">Đăng ký ngay</Link>
             </Button>
             <Button
               asChild
@@ -328,7 +273,7 @@ export default function PricingPage() {
               variant="outline"
               className="border-white text-white hover:bg-white/10 bg-transparent"
             >
-              <Link href="/contact">Liên hệ ngay</Link>
+              <Link href="/rooms">Duyệt phòng trống</Link>
             </Button>
           </div>
         </div>

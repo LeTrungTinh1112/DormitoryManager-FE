@@ -1,108 +1,49 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Header } from '@/components/header'
 import { Footer } from '@/components/footer'
 import { RoomCard } from '@/components/room-card'
-import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Search, Heart } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
+import { Room } from '@/lib/data'
 
-// Mock data - replace with API calls
-const allRooms = [
-  {
-    id: 'standard-1',
-    name: 'Phòng Standard 4 Người - Tầng 1',
-    type: 'Standard',
-    capacity: 4,
-    price: 500000,
-    status: 'available' as const,
-    manager: { name: 'Nguyễn Văn A', phone: '0908 123 456' },
-  },
-  {
-    id: 'standard-2',
-    name: 'Phòng Standard 4 Người - Tầng 2',
-    type: 'Standard',
-    capacity: 4,
-    price: 500000,
-    status: 'available' as const,
-    manager: { name: 'Nguyễn Văn A', phone: '0908 123 456' },
-  },
-  {
-    id: 'standard-3',
-    name: 'Phòng Standard 4 Người - Tầng 3',
-    type: 'Standard',
-    capacity: 4,
-    price: 500000,
-    status: 'soon' as const,
-    manager: { name: 'Nguyễn Văn A', phone: '0908 123 456' },
-  },
-  {
-    id: 'premium-1',
-    name: 'Phòng Premium 2 Người - Tầng 1',
-    type: 'Premium',
-    capacity: 2,
-    price: 800000,
-    status: 'available' as const,
-    manager: { name: 'Trần Thị B', phone: '0909 234 567' },
-  },
-  {
-    id: 'premium-2',
-    name: 'Phòng Premium 2 Người - Tầng 2',
-    type: 'Premium',
-    capacity: 2,
-    price: 800000,
-    status: 'available' as const,
-    manager: { name: 'Trần Thị B', phone: '0909 234 567' },
-  },
-  {
-    id: 'premium-3',
-    name: 'Phòng Premium 2 Người - Tầng 3',
-    type: 'Premium',
-    capacity: 2,
-    price: 850000,
-    status: 'soon' as const,
-    manager: { name: 'Trần Thị B', phone: '0909 234 567' },
-  },
-  {
-    id: 'vip-1',
-    name: 'Phòng VIP 1 Người - Tầng 4',
-    type: 'VIP',
-    capacity: 1,
-    price: 1200000,
-    status: 'available' as const,
-    manager: { name: 'Lê Văn C', phone: '0910 345 678' },
-  },
-  {
-    id: 'vip-2',
-    name: 'Phòng VIP 1 Người - Tầng 5',
-    type: 'VIP',
-    capacity: 1,
-    price: 1200000,
-    status: 'full' as const,
-    manager: { name: 'Lê Văn C', phone: '0910 345 678' },
-  },
-  {
-    id: 'standard-4',
-    name: 'Phòng Standard 4 Người - Tầng 4',
-    type: 'Standard',
-    capacity: 4,
-    price: 520000,
-    status: 'available' as const,
-    manager: { name: 'Phạm Thị D', phone: '0911 456 789' },
-  },
-]
+const ITEMS_PER_PAGE = 9
+
+const MIN_PRICE = 0
+const MAX_PRICE = 5000000
 
 export default function RoomsPage() {
+  const [allRooms, setAllRooms] = useState<Room[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  
   const [selectedTypes, setSelectedTypes] = useState<string[]>([])
   const [selectedCapacities, setSelectedCapacities] = useState<number[]>([])
   const [selectedStatus, setSelectedStatus] = useState<string>('all')
-  const [priceRange, setPriceRange] = useState<string>('all')
+  const [priceMin, setPriceMin] = useState(MIN_PRICE)
+  const [priceMax, setPriceMax] = useState(MAX_PRICE)
   const [sortBy, setSortBy] = useState<string>('default')
   const [searchQuery, setSearchQuery] = useState<string>('')
-  const [showFavoritesOnly, setShowFavoritesOnly] = useState<boolean>(false)
+  const [currentPage, setCurrentPage] = useState(1)
+
+  // Fetch rooms from API
+  useEffect(() => {
+    async function fetchRooms() {
+      try {
+        setIsLoading(true)
+        const res = await fetch('/api/rooms?limit=100')
+        if (!res.ok) throw new Error('Failed to fetch rooms')
+        const data = await res.json()
+        setAllRooms(data.data)
+      } catch (error) {
+        console.error('Error fetching rooms:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    fetchRooms()
+  }, [])
 
   // Filter logic
   const filteredRooms = useMemo(() => {
@@ -133,14 +74,17 @@ export default function RoomsPage() {
         return false
       }
 
-      // Price filter
-      if (priceRange === 'low' && room.price > 600000) return false
-      if (priceRange === 'mid' && (room.price < 600000 || room.price > 1000000)) return false
-      if (priceRange === 'high' && room.price < 1000000) return false
+      // Price filter - range slider
+      if (room.price < priceMin || room.price > priceMax) return false
 
       return true
     })
-  }, [selectedTypes, selectedCapacities, selectedStatus, priceRange, searchQuery])
+  }, [allRooms, selectedTypes, selectedCapacities, selectedStatus, priceMin, priceMax, searchQuery])
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [selectedTypes, selectedCapacities, selectedStatus, priceMin, priceMax, searchQuery, sortBy])
 
   // Sort logic
   const sortedRooms = useMemo(() => {
@@ -163,13 +107,16 @@ export default function RoomsPage() {
     )
   }
 
-  const resetFilters = () => {
-    setSelectedTypes([])
-    setSelectedCapacities([])
-    setSelectedStatus('all')
-    setPriceRange('all')
-    setSearchQuery('')
-    setShowFavoritesOnly(false)
+  // Pagination logic
+  const totalPages = Math.ceil(sortedRooms.length / ITEMS_PER_PAGE)
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
+  const endIndex = startIndex + ITEMS_PER_PAGE
+  const paginatedRooms = sortedRooms.slice(startIndex, endIndex)
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(Math.max(1, Math.min(page, totalPages)))
+    // Scroll to top of rooms section
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   return (
@@ -202,6 +149,7 @@ export default function RoomsPage() {
                       <div key={type} className="flex items-center gap-2">
                         <Checkbox
                           id={`type-${type}`}
+                          className="text-sm font-normal cursor-pointer bg-white"
                           checked={selectedTypes.includes(type)}
                           onCheckedChange={() => toggleType(type)}
                         />
@@ -223,12 +171,13 @@ export default function RoomsPage() {
                       <div key={capacity} className="flex items-center gap-2">
                         <Checkbox
                           id={`capacity-${capacity}`}
+                          className="text-sm font-normal cursor-pointer bg-white"
                           checked={selectedCapacities.includes(capacity)}
                           onCheckedChange={() => toggleCapacity(capacity)}
                         />
                         <Label
                           htmlFor={`capacity-${capacity}`}
-                          className="text-sm font-normal cursor-pointer"
+                          className="text-sm font-normal cursor-pointer "
                         >
                           {capacity} người
                         </Label>
@@ -238,128 +187,228 @@ export default function RoomsPage() {
                 </div>
 
                 <div className="border-t border-border pt-6">
-                  <h3 className="font-semibold text-foreground mb-4">Giá</h3>
-                  <div className="space-y-3">
-                    {[
-                      { value: 'low', label: '500k - 600k' },
-                      { value: 'mid', label: '600k - 1tr' },
-                      { value: 'high', label: '> 1tr' },
-                    ].map((option) => (
-                      <div key={option.value} className="flex items-center gap-2">
-                        <Checkbox
-                          id={`price-${option.value}`}
-                          checked={priceRange === option.value}
-                          onCheckedChange={() =>
-                            setPriceRange(priceRange === option.value ? 'all' : option.value)
-                          }
-                        />
-                        <Label
-                          htmlFor={`price-${option.value}`}
-                          className="text-sm font-normal cursor-pointer"
-                        >
-                          {option.label}
-                        </Label>
+                  <h3 className="font-semibold text-foreground mb-4">Khoảng giá</h3>
+                  <div className="space-y-4">
+                    {/* Min Price Slider */}
+                    <div>
+                      <label className="text-sm text-muted-foreground mb-2 block">Giá tối thiểu</label>
+                      <input
+                        type="range"
+                        min={MIN_PRICE}
+                        max={MAX_PRICE}
+                        value={priceMin}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value)
+                          if (val <= priceMax) setPriceMin(val)
+                        }}
+                        className="w-full h-2 bg-border rounded-lg appearance-none cursor-pointer accent-primary"
+                      />
+                      <div className="text-sm font-semibold text-primary mt-1">
+                        {(priceMin / 1000000).toFixed(1)}M VNĐ
                       </div>
-                    ))}
+                    </div>
+
+                    {/* Max Price Slider */}
+                    <div>
+                      <label className="text-sm text-muted-foreground mb-2 block">Giá tối đa</label>
+                      <input
+                        type="range"
+                        min={MIN_PRICE}
+                        max={MAX_PRICE}
+                        value={priceMax}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value)
+                          if (val >= priceMin) setPriceMax(val)
+                        }}
+                        className="w-full h-2 bg-border rounded-lg appearance-none cursor-pointer accent-primary"
+                      />
+                      <div className="text-sm font-semibold text-primary mt-1">
+                        {(priceMax / 1000000).toFixed(1)}M VNĐ
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                <div className="border-t border-border pt-6">
-                  <h3 className="font-semibold text-foreground mb-4">Trạng thái</h3>
-                  <select
-                    value={selectedStatus}
-                    onChange={(e) => setSelectedStatus(e.target.value)}
-                    className="w-full px-3 py-2 border border-border rounded bg-white text-sm text-foreground"
-                  >
-                    <option value="all">Tất cả</option>
-                    <option value="available">Còn trống</option>
-                    <option value="soon">Sắp trống</option>
-                  </select>
-                </div>
-
-                <Button
-                  onClick={resetFilters}
-                  variant="outline"
-                  className="w-full border-primary text-primary hover:bg-primary/5 bg-transparent"
+                {/* Reset Filters */}
+                <button
+                  onClick={() => {
+                    setSelectedTypes([])
+                    setSelectedCapacities([])
+                    setSelectedStatus('all')
+                    setPriceMin(MIN_PRICE)
+                    setPriceMax(MAX_PRICE)
+                    setSearchQuery('')
+                    setCurrentPage(1)
+                  }}
+                  className="w-full py-2 text-sm text-primary hover:text-primary/90 font-medium border border-primary rounded-lg transition-colors"
                 >
                   Xóa bộ lọc
-                </Button>
+                </button>
               </div>
             </div>
 
-            {/* Rooms Grid */}
+            {/* Room List Section */}
             <div className="lg:col-span-3 space-y-6">
-              {/* Search Bar */}
-              <div className="flex flex-col gap-4">
-                <div className="relative">
-                  <Search className="absolute left-3 top-3 text-muted-foreground" size={20} />
+              {/* Search & Sort Bar */}
+              <div className="flex flex-col sm:flex-row gap-4 justify-between items-center bg-card p-4 rounded-lg border border-border">
+                <div className="relative w-full sm:w-96">
                   <input
                     type="text"
-                    placeholder="Tìm kiếm phòng, loại, quản lý..."
+                    placeholder="Tìm theo tên vé, số phòng..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 border border-border rounded-lg bg-card focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                    className="w-full pl-10 pr-4 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
                   />
+                  {/* Search Icon */}
+                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <circle cx="11" cy="11" r="8"></circle>
+                      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                  </div>
                 </div>
-                <button
-                  onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
-                  className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border transition-all w-full sm:w-auto ${
-                    showFavoritesOnly
-                      ? 'bg-primary text-white border-primary'
-                      : 'border-border bg-card text-foreground hover:bg-primary/5'
-                  }`}
-                >
-                  <Heart size={18} className={showFavoritesOnly ? 'fill-white' : ''} />
-                  <span>Yêu thích của tôi</span>
-                </button>
+
+                <div className="flex items-center gap-4 w-full sm:w-auto">
+                    <select
+                        value={selectedStatus}
+                        onChange={(e) => setSelectedStatus(e.target.value)}
+                        className="px-4 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    >
+                        <option value="all">Tất cả trạng thái</option>
+                        <option value="available">Còn trống</option>
+                        <option value="soon">Sắp trống</option>
+                        <option value="full">Đã kín</option>
+                    </select>
+
+                    <select
+                        value={sortBy}
+                        onChange={(e) => setSortBy(e.target.value)}
+                        className="px-4 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    >
+                        <option value="default">Sắp xếp mặc định</option>
+                        <option value="price-asc">Giá tăng dần</option>
+                        <option value="price-desc">Giá giảm dần</option>
+                        <option value="name">Tên A-Z</option>
+                    </select>
+                </div>
               </div>
 
-              {/* Toolbar */}
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <p className="text-muted-foreground">
-                  Hiển thị {sortedRooms.length} phòng
-                </p>
-                <div className="w-full sm:w-auto">
-                  <Select value={sortBy} onValueChange={setSortBy}>
-                    <SelectTrigger className="bg-card border-border">
-                      <SelectValue placeholder="Sắp xếp" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="default">Mặc định</SelectItem>
-                      <SelectItem value="price-asc">Giá: Thấp → Cao</SelectItem>
-                      <SelectItem value="price-desc">Giá: Cao → Thấp</SelectItem>
-                      <SelectItem value="name">Tên</SelectItem>
-                    </SelectContent>
-                  </Select>
+              {/* Room Grid */}
+              {isLoading ? (
+                <div className="flex justify-center items-center py-20">
+                  <Loader2 className="animate-spin text-primary" size={48} />
                 </div>
-              </div>
-
-              {/* Rooms Grid */}
-              {sortedRooms.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {sortedRooms.map((room) => (
-                    <RoomCard key={room.id} {...room} />
+              ) : paginatedRooms.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {paginatedRooms.map((room) => (
+                    <div key={room.id} className="h-full">
+                      <RoomCard
+                        id={room.slug} // Use slug for navigation
+                        name={room.name}
+                        type={room.type}
+                        capacity={room.capacity}
+                        price={room.price}
+                        status={room.status}
+                        image={room.images?.[0]}
+                        manager={room.manager}
+                      />
+                    </div>
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-16 bg-card rounded-lg border border-border">
-                  <p className="text-muted-foreground text-lg mb-4">
-                    Không tìm thấy phòng phù hợp
+                <div className="text-center py-20 bg-card rounded-lg border border-border">
+                  <p className="text-lg text-muted-foreground">
+                    Không tìm thấy phòng nào phù hợp với bộ lọc.
                   </p>
-                  <Button
-                    onClick={resetFilters}
-                    variant="outline"
-                    className="border-primary text-primary hover:bg-primary/5 bg-transparent"
+                  <button
+                    onClick={() => {
+                        setSelectedTypes([])
+                        setSelectedCapacities([])
+                        setSelectedStatus('all')
+                        setPriceMin(MIN_PRICE)
+                        setPriceMax(MAX_PRICE)
+                        setSearchQuery('')
+                        setCurrentPage(1)
+                    }}
+                    className="mt-4 px-4 py-2 text-primary hover:bg-primary/10 rounded-lg transition-colors"
                   >
-                    Xóa bộ lọc
-                  </Button>
+                    Xóa bộ lọc và thử lại
+                  </button>
+                </div>
+              )}
+
+              {/* Pagination */}
+              {!isLoading && sortedRooms.length > 0 && (
+                <div className="flex justify-center items-center gap-2 mt-8">
+                  <button
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="p-2 rounded-lg border border-border hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                  </button>
+                  
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <button
+                      key={page}
+                      onClick={() => handlePageChange(page)}
+                      className={`w-10 h-10 rounded-lg font-medium transition-colors ${
+                        currentPage === page
+                          ? 'bg-primary text-primary-foreground'
+                          : 'hover:bg-accent border border-border'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+
+                  <button
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className="p-2 rounded-lg border border-border hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                     <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                  </button>
                 </div>
               )}
             </div>
           </div>
         </div>
       </div>
-
       <Footer />
     </main>
   )

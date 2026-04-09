@@ -111,7 +111,6 @@ export default function ProfilePage() {
       }
       localStorage.removeItem('auth_token')
       localStorage.removeItem('user_data')
-      document.cookie = 'auth_token=; path=/; max-age=0' // Xóa cookie ở phía client
       router.push('/')
       // Reload to refresh auth state
       window.location.href = '/'
