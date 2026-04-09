@@ -60,31 +60,32 @@ export default function LoginPage() {
 
     // Valid credentials
     try {
-        const response = await fetch('/api/auth/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(formData)
-        });
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
 
-        const data = await response.json();
+      const data = await response.json();
 
-        if (!response.ok) {
-            setErrors({ submit: data.error || 'Đăng nhập thất bại' });
-            setIsLoading(false);
-            return; 
-        }
+      if (!response.ok) {
+        setErrors({ submit: data.error || 'Đăng nhập thất bại' });
+        setIsLoading(false);
+        return;
+      }
 
-        // Simulate successful login
-        localStorage.setItem('auth_token', data.token)
-        localStorage.setItem('user_data', JSON.stringify(data.user))
+      // Simulate successful login
+      localStorage.setItem('auth_token', data.token)
+      localStorage.setItem('user_data', JSON.stringify(data.user))
+      document.cookie = `auth_token=${data.token}; path=/; max-age=604800`; // Thêm cookie cho middleware
 
-        setIsLoading(false)
-        alert('Đăng nhập thành công! Chào mừng bạn đến với KTX Student Housing.')
-        router.push('/dashboard')
+      setIsLoading(false)
+      alert('Đăng nhập thành công! Chào mừng bạn đến với KTX Student Housing.')
+      router.push('/dashboard')
 
     } catch (error) {
-        setErrors({ submit: 'Đã xảy ra lỗi kết nối' });
-        setIsLoading(false);
+      setErrors({ submit: 'Đã xảy ra lỗi kết nối' });
+      setIsLoading(false);
     }
   }
 
@@ -106,21 +107,21 @@ export default function LoginPage() {
           <div className="mb-4 space-y-2">
             <h3 className="text-sm font-semibold mb-2">Tài khoản demo:</h3>
             <div className="grid grid-cols-3 gap-2">
-                <Button type="button" variant="outline" size="sm" onClick={() => {
-                    setFormData(prev => ({ ...prev, email: 'admin@ktx.edu.vn', password: 'admin123' }));
-                }}>
-                    Manager
-                </Button>
-                <Button type="button" variant="outline" size="sm" onClick={() => {
-                    setFormData(prev => ({ ...prev, email: 'sinhvien@ktx.edu.vn', password: 'resident123' }));
-                }}>
-                    Resident
-                </Button>
-                <Button type="button" variant="outline" size="sm" onClick={() => {
-                    setFormData(prev => ({ ...prev, email: 'guest@example.com', password: 'guest123' }));
-                }}>
-                    Guest
-                </Button>
+              <Button type="button" variant="outline" size="sm" onClick={() => {
+                setFormData(prev => ({ ...prev, email: 'admin@ktx.edu.vn', password: 'admin123' }));
+              }}>
+                Manager
+              </Button>
+              <Button type="button" variant="outline" size="sm" onClick={() => {
+                setFormData(prev => ({ ...prev, email: 'sinhvien@ktx.edu.vn', password: 'resident123' }));
+              }}>
+                Resident
+              </Button>
+              <Button type="button" variant="outline" size="sm" onClick={() => {
+                setFormData(prev => ({ ...prev, email: 'guest@example.com', password: 'guest123' }));
+              }}>
+                Guest
+              </Button>
             </div>
           </div>
 
@@ -147,9 +148,8 @@ export default function LoginPage() {
                   value={formData.email}
                   onChange={handleChange}
                   placeholder="example@gmail.com"
-                  className={`pl-10 bg-card border-border focus:ring-primary ${
-                    errors.email ? 'border-red-500' : ''
-                  }`}
+                  className={`pl-10 bg-card border-border focus:ring-primary ${errors.email ? 'border-red-500' : ''
+                    }`}
                 />
               </div>
               {errors.email && <p className="text-sm text-red-500">{errors.email}</p>}
@@ -169,9 +169,8 @@ export default function LoginPage() {
                   value={formData.password}
                   onChange={handleChange}
                   placeholder="••••••••"
-                  className={`pl-10 pr-10 bg-card border-border focus:ring-primary ${
-                    errors.password ? 'border-red-500' : ''
-                  }`}
+                  className={`pl-10 pr-10 bg-card border-border focus:ring-primary ${errors.password ? 'border-red-500' : ''
+                    }`}
                 />
                 <button
                   type="button"
