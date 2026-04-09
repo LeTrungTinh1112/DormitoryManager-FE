@@ -7,11 +7,13 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
+import { useToast } from '@/hooks/use-toast'
 import { CheckCircle2 } from 'lucide-react'
 
 const roomTypes = ['Standard', 'Premium', 'VIP']
 
 export default function RegisterPage() {
+  const { toast } = useToast()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [formData, setFormData] = useState({
@@ -40,7 +42,7 @@ export default function RegisterPage() {
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
-    
+
     if (formData.fullName.length < 2) {
       newErrors.fullName = 'Họ tên phải có ít nhất 2 ký tự'
     }
@@ -81,7 +83,7 @@ export default function RegisterPage() {
       }
 
       setSubmitted(true)
-      
+
       // Reset after 3 seconds
       setTimeout(() => {
         setSubmitted(false)
@@ -98,7 +100,11 @@ export default function RegisterPage() {
 
     } catch (error) {
       console.error('Error submitting form:', error)
-      alert('Có lỗi xảy ra, vui lòng thử lại sau!')
+      toast({
+        variant: 'destructive',
+        title: 'Có lỗi xảy ra',
+        description: 'Vui lòng thử lại sau!',
+      })
     } finally {
       setIsSubmitting(false)
     }

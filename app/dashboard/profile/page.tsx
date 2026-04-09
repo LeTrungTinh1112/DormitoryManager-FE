@@ -7,13 +7,27 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { useToast } from '@/hooks/use-toast'
 import { Heart, Calendar, FileText, CreditCard, LogOut, Edit2, Lock } from 'lucide-react'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import Image from 'next/image'
 
 export default function ProfilePage() {
   const router = useRouter()
+  const { toast } = useToast()
   const [isEditing, setIsEditing] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
   const [userData, setUserData] = useState<any>({
     id: '',
     name: 'Đang tải...',
@@ -29,7 +43,7 @@ export default function ProfilePage() {
     accountStatus: 'active',
     joinDate: '',
   })
-  
+
   const [editData, setEditData] = useState(userData)
   const [stats] = useState({
     favorites: 3,
@@ -48,14 +62,14 @@ export default function ProfilePage() {
           if (data.data) {
             setUserData(data.data);
             setEditData({
-                ...data.data,
-                // Ensure fields have defaults if missing to avoid uncontrolled inputs warning
-                phone: data.data.phone || '',
-                birthDate: data.data.birthDate || '',
-                studentId: data.data.studentId || '',
-                address: data.data.address || '',
-                school: data.data.school || '',
-                major: data.data.major || ''
+              ...data.data,
+              // Ensure fields have defaults if missing to avoid uncontrolled inputs warning
+              phone: data.data.phone || '',
+              birthDate: data.data.birthDate || '',
+              studentId: data.data.studentId || '',
+              address: data.data.address || '',
+              school: data.data.school || '',
+              major: data.data.major || ''
             });
           }
         }
@@ -90,36 +104,59 @@ export default function ProfilePage() {
       if (response.ok) {
         setUserData(editData);
         setIsEditing(false);
-        alert('Cập nhật thông tin thành công!');
+        toast({
+          title: 'Thành công',
+          description: 'Cập nhật thông tin thành công!',
+        });
       } else {
-         alert('Cập nhật thất bại. Vui lòng thử lại.');
+        toast({
+          variant: 'destructive',
+          title: 'Thất bại',
+          description: 'Cập nhật thất bại. Vui lòng thử lại.',
+        });
       }
     } catch (error) {
-       console.error('Error updating profile:', error);
-       alert('Đã xảy ra lỗi khi cập nhật.');
+      console.error('Error updating profile:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Lỗi',
+        description: 'Đã xảy ra lỗi khi cập nhật.',
+      });
     } finally {
       setIsLoading(false);
     }
   }
 
   const handleLogout = async () => {
-    if (confirm('Bạn có chắc chắn muốn đăng xuất?')) {
-      try {
-        await fetch('/api/auth/logout', { method: 'POST' });
-      } catch(e) {
-        console.error(e)
-      }
-      localStorage.removeItem('auth_token')
-      localStorage.removeItem('user_data')
-      document.cookie = 'auth_token=; path=/; max-age=0' // Xóa cookie ở phía client
-      router.push('/')
-      // Reload to refresh auth state
-      window.location.href = '/'
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+    } catch (e) {
+      console.error(e)
     }
+    localStorage.removeItem('auth_token')
+    localStorage.removeItem('user_data')
+    document.cookie = 'auth_token=; path=/; max-age=0' // Xóa cookie ở phía client
+    router.push('/')
+    // Reload to refresh auth state
+    window.location.href = '/'
   }
 
   return (
     <main className="min-h-screen flex flex-col bg-white">
+      <AlertDialog open={showLogoutConfirm} onOpenChange={setShowLogoutConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận đăng xuất</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn có chắc chắn muốn đăng xuất khỏi tài khoản của mình?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogAction onClick={handleLogout} className="bg-red-600 hover:bg-red-700 text-white">Đăng xuất</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Main Content */}
       <div className="flex-1 py-12 px-4 sm:px-6 lg:px-8">
@@ -181,7 +218,7 @@ export default function ProfilePage() {
 
                 {/* Logout Button */}
                 <button
-                  onClick={handleLogout}
+                  onClick={() => setShowLogoutConfirm(true)}
                   className="w-full flex items-center justify-center gap-2 p-3 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors font-medium border-t border-border pt-6"
                 >
                   <LogOut size={18} />

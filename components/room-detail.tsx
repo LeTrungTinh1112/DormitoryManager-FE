@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { ImageSlideshow } from '@/components/image-slideshow'
 import { useFavorites } from '@/hooks/use-favorites'
+import { useToast } from '@/hooks/use-toast'
 import {
   AirVent,
   Wifi,
@@ -43,6 +44,7 @@ interface RoomDetailProps {
 }
 
 export function RoomDetail({ room, relatedRooms }: RoomDetailProps) {
+  const { toast } = useToast()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
 
@@ -53,7 +55,7 @@ export function RoomDetail({ room, relatedRooms }: RoomDetailProps) {
   const noteRef = React.useRef<HTMLTextAreaElement>(null)
 
   // Fallback status if somehow invalid
-  const status = statusConfig[room.status] || statusConfig.available 
+  const status = statusConfig[room.status] || statusConfig.available
   const { isFavorite, toggleFavorite, isLoaded } = useFavorites()
   const isFav = isLoaded ? isFavorite(room.id) : false
 
@@ -87,8 +89,11 @@ export function RoomDetail({ room, relatedRooms }: RoomDetailProps) {
     // Simulate API call
     await new Promise((resolve) => setTimeout(resolve, 1000))
     setIsSubmitting(false)
-    alert('Yêu cầu của bạn đã được gửi. Chúng tôi sẽ liên hệ sớm nhất!')
-    
+    toast({
+      title: 'Đăng ký phòng thành công',
+      description: 'Yêu cầu của bạn đã được gửi. Chúng tôi sẽ liên hệ sớm nhất!',
+    })
+
     // Reset form
     if (nameRef.current) nameRef.current.value = ''
     if (phoneRef.current) phoneRef.current.value = ''
@@ -136,9 +141,8 @@ export function RoomDetail({ room, relatedRooms }: RoomDetailProps) {
                   >
                     <Heart
                       size={28}
-                      className={`transition-colors ${
-                        isFav ? 'fill-primary text-primary' : 'text-gray-400'
-                      }`}
+                      className={`transition-colors ${isFav ? 'fill-primary text-primary' : 'text-gray-400'
+                        }`}
                     />
                   </button>
                 )}

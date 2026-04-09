@@ -2,6 +2,7 @@ import React from "react"
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
+import { Toaster } from '@/components/ui/toaster'
 import { FavoritesProvider } from '@/components/favorites-provider'
 import './globals.css'
 
@@ -27,8 +28,7 @@ export default function RootLayout({
         <FavoritesProvider>
           {children}
         </FavoritesProvider>
-        <Analytics />
-      </body>
+        <Analytics />        <Toaster />      </body>
     </html>
   )
 }

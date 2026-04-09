@@ -2,6 +2,16 @@
 
 import { createContext, useContext, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 interface FavoritesContextType {
   favorites: string[]
@@ -17,6 +27,7 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const [favorites, setFavorites] = useState<string[]>([])
   const [isLoaded, setIsLoaded] = useState(false)
+  const [showAuthConfirm, setShowAuthConfirm] = useState(false)
 
   useEffect(() => {
     const stored = localStorage.getItem('room-favorites')
@@ -40,9 +51,7 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
     // Check authentication
     const token = localStorage.getItem('auth_token')
     if (!token) {
-      if (confirm('Bạn cần đăng nhập để thêm vào danh sách yêu thích. Đăng nhập ngay?')) {
-        router.push('/auth/login')
-      }
+      setShowAuthConfirm(true)
       return
     }
 
@@ -66,6 +75,20 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
       }}
     >
       {children}
+      <AlertDialog open={showAuthConfirm} onOpenChange={setShowAuthConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Yêu cầu đăng nhập</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn cần đăng nhập để thêm vào danh sách yêu thích. Bạn có muốn đăng nhập ngay?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogAction onClick={() => router.push('/auth/login')}>Đăng nhập</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </FavoritesContext.Provider>
   )
 }

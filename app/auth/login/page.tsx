@@ -9,10 +9,12 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
+import { useToast } from '@/hooks/use-toast'
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react'
 
 export default function LoginPage() {
   const router = useRouter()
+  const { toast } = useToast()
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [formData, setFormData] = useState({
@@ -80,7 +82,10 @@ export default function LoginPage() {
       document.cookie = `auth_token=${data.token}; path=/; max-age=604800`; // Thêm cookie cho middleware
 
       setIsLoading(false)
-      alert('Đăng nhập thành công! Chào mừng bạn đến với KTX Student Housing.')
+      toast({
+        title: 'Đăng nhập thành công',
+        description: 'Chào mừng bạn đến với KTX Student Housing.',
+      })
       router.push('/dashboard')
 
     } catch (error) {
