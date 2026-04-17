@@ -576,6 +576,32 @@ export const updatePaymentStatus = async (id: string, status: Payment['status'],
          // When payment is approved, transition user from 'student' to 'resident'
          if (status === 'paid' && userId) {
            transitionUserToResident(userId);
+           
+           // If a student just paid their first rental/deposit fees, make them a resident and create a contract
+           if (payments[index].title?.includes('Tiền cọc') || payments[index].title?.includes('tháng đầu')) {
+               // Tạo hợp đồng mặc định 6 tháng
+               const startDate = new Date();
+               const endDate = new Date();
+               endDate.setMonth(startDate.getMonth() + 6);
+               
+               // Tìm booking tương ứng để lấy thông tin phòng 
+               const booking = global.mockBookingsStore?.find(b => b.email === payments[index].userId || b.fullName === payments[index].userName);
+               
+               const newContract: Contract = {
+                   id: `HD${Date.now()}`,
+                   studentName: payments[index].userName,
+                   studentEmail: payments[index].userId,
+                   studentPhone: booking?.phone || 'Chưa cập nhật',
+                   roomName: booking?.roomName || 'Đang cập nhật',
+                   startDate: startDate.toISOString().split('T')[0],
+                   endDate: endDate.toISOString().split('T')[0],
+                   status: 'active',
+                   value: 1500000 // Tiền thuê tháng mặc định
+               };
+               
+               if (!global.mockContractsStore) global.mockContractsStore = [];
+               global.mockContractsStore.unshift(newContract);
+           }
          }
      }
      
@@ -622,6 +648,49 @@ export const transitionUserToResident = (userId: string) => {
     return null;
 }
 
+export const approvePayment = async (id: string, status: 'paid' | 'rejected') => {
+    const payments = global.mockPaymentsStore || [];
+    const index = payments.findIndex(p => p.id === id);
+    if (index !== -1) {
+      if (status === 'paid' && payments[index].userId) {
+          // If a student just paid their first rental/deposit fees, make them a resident and create a contract
+          if (payments[index].title?.includes('Tiền cọc')) {
+              transitionUserToResidentByEmail(payments[index].userId); // userId holds email currently from the mock logic
+
+              // Tạo hợp đồng mặc định 6 tháng
+              const startDate = new Date();
+              const endDate = new Date();
+              endDate.setMonth(startDate.getMonth() + 6);
+              
+              // Tìm booking tương ứng để lấy thông tin phòng 
+              const booking = global.mockBookingsStore?.find(b => b.email === payments[index].userId && payments[index].title?.includes(b.roomName || ''));
+              
+              const newContract: Contract = {
+                  id: `HD${Date.now()}`,
+                  studentName: payments[index].userName,
+                  studentEmail: payments[index].userId,
+                  studentPhone: booking?.phone || 'Chưa cập nhật',
+                  roomName: booking?.roomName || 'Đang cập nhật',
+                  startDate: startDate.toISOString().split('T')[0],
+                  endDate: endDate.toISOString().split('T')[0],
+                  status: 'active',
+                  value: 1500000 // Tiền thuê tháng mặc định
+              };
+              
+              if (!global.mockContractsStore) global.mockContractsStore = [];
+              global.mockContractsStore.unshift(newContract);
+          }
+      }
+      
+      payments[index] = { 
+          ...payments[index], 
+          status 
+      };
+      return payments[index];
+    }
+    return null;
+}
+
 export const submitPaymentProof = async (id: string, proof: Partial<Payment>) => {
     const payments = global.mockPaymentsStore || [];
     const index = payments.findIndex(p => p.id === id);
@@ -643,9 +712,26 @@ export const updateBookingStatus = async (id: string, status: Booking['status'])
   if (index !== -1) {
       bookings[index] = { ...bookings[index], status };
         
-        // Logical: Khi quản lý duyệt yêu cầu thuê phòng, tài khoản guest thành resident
-        if (status === 'confirmed') {
-             transitionUserToResidentByEmail(bookings[index].email);
+        // Logical: Khi quản lý duyệt (xác nhận/ký HĐ), hóa đơn đóng tiền cọc và tháng đầu tiên được tạo ra
+        if (status === 'confirmed' || status === 'completed') {
+            const hasPayment = global.mockPaymentsStore?.find(p => p.title.includes(bookings[index].roomName || 'phòng') && p.userName === bookings[index].fullName);
+            
+            if (!hasPayment) {
+                 const newPayment: Payment = {
+                     id: `PAY${Math.floor(Math.random() * 100000)}`,
+                     userId: bookings[index].email, // using email as ID since user ID might not be mapped in Mock Booking easily
+                     userName: bookings[index].fullName,
+                     title: `Tiền cọc & thuê tháng đầu ${bookings[index].roomName || 'phòng'}`,
+                     originalAmount: 3500000, 
+                     amount: 3500000,
+                     status: 'pending',
+                     dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days from now
+                     createdAt: new Date().toISOString()
+                 };
+                 
+                 if (!global.mockPaymentsStore) global.mockPaymentsStore = [];
+                 global.mockPaymentsStore.unshift(newPayment);
+            }
         }
         
         return bookings[index];
@@ -684,11 +770,11 @@ export const addBooking = async (booking: Omit<Booking, 'id' | 'createdAt' | 'st
     id: `BOOK${Math.floor(Math.random() * 10000).toString().padStart(3, '0')}`,
     createdAt: new Date().toISOString(),
     status: 'pending',
-    // Default mock data for UI display
-    roomName: `Phòng ${booking.roomType} (Đăng ký nhanh)`,
-    roomImage: 'https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?w=500&h=300&fit=crop', // Generic image
-    manager: 'Đang phân công',
-    managerPhone: '---',
+    // Default mock data for UI display if not provided
+    roomName: booking.roomName || `Phòng ${booking.roomType} (Đăng ký nhanh)`,
+    roomImage: booking.roomImage || 'https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?w=500&h=300&fit=crop', // Generic image
+    manager: booking.manager || 'Đang phân công',
+    managerPhone: booking.managerPhone || '---',
   };
   
   if (global.mockBookingsStore) {

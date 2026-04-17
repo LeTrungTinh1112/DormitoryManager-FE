@@ -1,6 +1,6 @@
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getPayments, submitPaymentProof, updatePaymentStatus, getCurrentUser } from '@/lib/mock-db';
+import { getPayments, submitPaymentProof, updatePaymentStatus, approvePayment, getCurrentUser } from '@/lib/mock-db';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,8 +17,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ data: allPayments });
   }
 
-  // If resident, filter by userId
-  const userPayments = allPayments.filter(p => p.userId === currentUser.id);
+  // If resident/student, filter by email instead of ID since ID depends on mock setup
+  // and bookings use email to generate first payment
+  const userPayments = allPayments.filter(p => p.userId === currentUser.id || p.userId === currentUser.email);
 
   return NextResponse.json({ data: userPayments });
 }
@@ -39,6 +40,12 @@ export async function PUT(request: NextRequest) {
             return NextResponse.json({ success: true, data: upatedPayment });
         }
         
+        if (action === 'approve_payment') {
+            const { status } = data; // 'paid' or 'rejected'
+            const upatedPayment = await approvePayment(id, status);
+            return NextResponse.json({ success: true, data: upatedPayment });
+        }
+
         if (action === 'update_status') {
             const { status, role, userId } = data;
             const upatedPayment = await updatePaymentStatus(id, status, role, userId);

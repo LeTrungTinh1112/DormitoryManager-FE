@@ -8,6 +8,14 @@ import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Clock, MapPin, User, Calendar, Phone, X, RotateCcw, Phone as CallIcon, ChevronLeft, ChevronRight } from 'lucide-react'
 import Image from 'next/image'
+import { useToast } from '@/hooks/use-toast'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 
 const ITEMS_PER_PAGE = 9
 
@@ -49,8 +57,39 @@ interface Booking {
 export default function BookingHistoryPage() {
   const [bookings, setBookings] = useState<Booking[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [isUpdating, setIsUpdating] = useState(false)
   const [selectedStatus, setSelectedStatus] = useState('all')
   const [currentPage, setCurrentPage] = useState(1)
+  const { toast } = useToast()
+
+  const handleUpdateStatus = async (id: string, status: string) => {
+    if (status === 'cancelled' && !window.confirm('Bạn có chắc chắn muốn hủy lịch này?')) return;
+    setIsUpdating(true)
+    try {
+      const response = await fetch('/api/bookings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, status })
+      })
+      if (response.ok) {
+        setBookings(prev => prev.map(b => b.id === id ? { ...b, status } : b))
+        toast({
+          title: "Thành công",
+          description: status === 'cancelled' ? "Đã hủy lịch xem phòng" : "Đã đặt lại lịch thành công",
+        })
+      } else {
+        throw new Error('Failed to update')
+      }
+    } catch (error) {
+      toast({
+        title: "Lỗi",
+        description: "Vui lòng thử lại sau.",
+        variant: "destructive"
+      })
+    } finally {
+      setIsUpdating(false)
+    }
+  }
 
   useEffect(() => {
     const fetchBookings = async () => {
@@ -178,7 +217,7 @@ export default function BookingHistoryPage() {
                           <div className="text-sm">
                             <p className="text-muted-foreground mb-0.5">Ngày đặt</p>
                             <p className="font-semibold text-foreground">
-                              {new Date(booking.bookingDate).toLocaleDateString('vi-VN')}
+                              {booking.bookingDate ? new Date(booking.bookingDate).toLocaleDateString('vi-VN') : 'Đang xử lý'}
                             </p>
                           </div>
                           <div className="text-sm">
@@ -209,18 +248,64 @@ export default function BookingHistoryPage() {
 
                       {/* Action Buttons */}
                       <div className="flex flex-col sm:flex-row gap-3">
-                        <Link href={`/rooms/${booking.id}`} className="flex-1">
-                          <Button
-                            variant="outline"
-                            className="w-full border-primary text-primary hover:bg-primary/5 bg-transparent"
-                          >
-                            Xem chi tiết
-                          </Button>
-                        </Link>
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button
+                              variant="outline"
+                              className="flex-1 border-primary text-primary hover:bg-primary/5 bg-transparent"
+                            >
+                              Xem chi tiết
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Chi tiết lịch hẹn</DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-4 py-4">
+                              <div className="flex gap-4 items-center">
+                                <Image src={booking.roomImage} alt={booking.roomName} width={80} height={80} className="rounded-lg object-cover" />
+                                <div>
+                                  <h4 className="font-semibold text-lg">{booking.roomName}</h4>
+                                  <Badge className={`${status.color} border-0 mt-1`}>{status.label}</Badge>
+                                </div>
+                              </div>
+                              <div className="grid grid-cols-2 gap-4 text-sm mt-4">
+                                <div>
+                                  <p className="text-muted-foreground">Mã lịch</p>
+                                  <p className="font-medium">{booking.id}</p>
+                                </div>
+                                <div>
+                                  <p className="text-muted-foreground">Ngày xem phòng</p>
+                                  <p className="font-medium">{booking.bookingDate ? new Date(booking.bookingDate).toLocaleDateString('vi-VN') : 'Đang xử lý'}</p>
+                                </div>
+                                <div>
+                                  <p className="text-muted-foreground">Thời gian</p>
+                                  <p className="font-medium">{booking.appointmentTime}</p>
+                                </div>
+                                <div>
+                                  <p className="text-muted-foreground">Quản lý hỗ trợ</p>
+                                  <p className="font-medium">{booking.manager}</p>
+                                </div>
+                                <div>
+                                  <p className="text-muted-foreground">SĐT Quản lý</p>
+                                  <p className="font-medium">{booking.managerPhone}</p>
+                                </div>
+                                {booking.notes && (
+                                  <div className="col-span-2">
+                                    <p className="text-muted-foreground">Ghi chú</p>
+                                    <p className="font-medium">{booking.notes}</p>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
 
                         {booking.status === 'pending' && (
                           <Button
                             variant="outline"
+                            onClick={() => handleUpdateStatus(booking.id, 'cancelled')}
+                            disabled={isUpdating}
                             className="flex-1 border-red-500 text-red-600 hover:bg-red-50 bg-transparent"
                           >
                             <X size={16} className="mr-1" />
@@ -228,9 +313,11 @@ export default function BookingHistoryPage() {
                           </Button>
                         )}
 
-                        {booking.status === 'confirmed' && (
+                        {(booking.status === 'confirmed' || booking.status === 'cancelled') && (
                           <Button
                             variant="outline"
+                            onClick={() => handleUpdateStatus(booking.id, 'pending')}
+                            disabled={isUpdating}
                             className="flex-1 border-primary text-primary hover:bg-primary/5 bg-transparent"
                           >
                             <RotateCcw size={16} className="mr-1" />
@@ -240,10 +327,13 @@ export default function BookingHistoryPage() {
 
                         <Button
                           variant="outline"
+                          asChild
                           className="flex-1 border-primary text-primary hover:bg-primary/5 bg-transparent"
                         >
-                          <CallIcon size={16} className="mr-1" />
-                          Liên hệ quản lý
+                          <a href={`tel:${booking.managerPhone || ''}`}>
+                            <CallIcon size={16} className="mr-1" />
+                            Liên hệ quản lý
+                          </a>
                         </Button>
                       </div>
                     </div>

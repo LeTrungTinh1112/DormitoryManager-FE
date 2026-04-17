@@ -87,6 +87,7 @@ export function DashboardTopbar({ onMenuClick, sidebarOpen }: DashboardTopbarPro
     }
     localStorage.removeItem('auth_token')
     localStorage.removeItem('user_data')
+    localStorage.removeItem('room-favorites') // Xóa danh sách yêu thích
     document.cookie = 'auth_token=; path=/; max-age=0' // Xóa cookie ở phía client
     router.push('/')
     // Reload to refresh auth state

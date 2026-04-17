@@ -163,7 +163,7 @@ export default function DashboardPage() {
 
       {/* Quick Actions */}
       <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Link href="/dashboard/bookings/new">
+        <Link href="/">
           <div className="bg-primary text-white rounded-lg p-6 hover:shadow-lg transition-shadow cursor-pointer">
             <Calendar className="mb-3" size={32} />
             <h3 className="font-bold text-lg mb-1">Đặt lịch xem phòng</h3>

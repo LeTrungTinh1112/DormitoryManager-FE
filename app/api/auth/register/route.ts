@@ -1,6 +1,6 @@
 
 import { NextRequest, NextResponse } from 'next/server';
-import { User, addUser, findUserByEmail } from '@/lib/mock-db';
+import { User, getUsers, addUser, findUserByEmail } from '@/lib/mock-db';
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,9 +21,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if user exists
-    // Note: global.mockUsersStore initialized in mock-db on load
-    // @ts-ignore
+    // Initialize mock db array if not done yet
+    getUsers();
+
     const existingUser = findUserByEmail(email);
 
     if (existingUser) {
@@ -40,15 +40,16 @@ export async function POST(request: NextRequest) {
       email,
       phone,
       password: password, // Store plain text for demo only!
-      gender: gender as any,
-      school,
-      roles: ['resident'],
+      gender: gender as any || 'other',
+      school: school || 'N/A',
+      roles: ['student'], // Mới đăng ký chỉ là student, chưa thuê phòng thì chưa là resident
       avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}`,
       accountStatus: 'active',
       joinDate: new Date().toISOString(),
       studentId: `SV${Math.floor(Math.random() * 10000)}`, // Generate random student ID
       address: 'Chưa cập nhật',
       major: 'Chưa cập nhật',
+      birthDate: 'Chưa cập nhật' // Adding missing property
     };
     
     // Add to global store

@@ -55,7 +55,7 @@ export default function ManagerInquiriesPage() {
 
   const fetchBookings = async () => {
     try {
-      const res = await fetch('/api/bookings')
+      const res = await fetch('/api/bookings', { cache: 'no-store' })
       const data = await res.json()
       // Map if necessary, but mock API returns flat structure similar to what we need
       setBookings(data.data || [])
@@ -136,7 +136,7 @@ export default function ManagerInquiriesPage() {
                             <TableCell>
                                 <div className="flex items-center gap-2">
                                     <Calendar size={14} />
-                                    <span>{new Date(booking.checkInDate).toLocaleDateString('vi-VN')}</span>
+                                    <span>{booking.checkInDate ? new Date(booking.checkInDate).toLocaleDateString('vi-VN') : 'Không xác định'}</span>
                                 </div>
                             </TableCell>
                             <TableCell>

@@ -380,7 +380,7 @@ export default function ManagerContractsPage() {
                                 <Label>Ngày bắt đầu</Label>
                                 <Input
                                     type="date"
-                                    value={currentContract.startDate || ''}
+                                    value={currentContract.startDate ? currentContract.startDate.split('T')[0] : ''}
                                     onChange={(e) => setCurrentContract({ ...currentContract, startDate: e.target.value })}
                                     disabled={isViewMode}
                                 />
@@ -389,7 +389,7 @@ export default function ManagerContractsPage() {
                                 <Label>Ngày kết thúc</Label>
                                 <Input
                                     type="date"
-                                    value={currentContract.endDate || ''}
+                                    value={currentContract.endDate ? currentContract.endDate.split('T')[0] : ''}
                                     onChange={(e) => setCurrentContract({ ...currentContract, endDate: e.target.value })}
                                     disabled={isViewMode}
                                 />

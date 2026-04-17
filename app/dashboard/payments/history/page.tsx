@@ -5,7 +5,15 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Download, Eye } from 'lucide-react'
+import { Download, Eye, FileText } from 'lucide-react'
+import { useToast } from '@/hooks/use-toast'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 
 // Define Payment interface matching API
 interface Payment {
@@ -53,6 +61,7 @@ export default function PaymentHistoryPage() {
   const [filterMonth, setFilterMonth] = useState('all')
   const [filterStatus, setFilterStatus] = useState('all')
   const [filterMethod, setFilterMethod] = useState('all')
+  const { toast } = useToast()
 
   useEffect(() => {
     const fetchPayments = async () => {
@@ -202,11 +211,73 @@ export default function PaymentHistoryPage() {
                             </td>
                             <td className="px-6 py-4 text-right">
                                 <div className="flex items-center justify-end gap-2">
-                                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
-                                    <Eye size={16} />
-                                </Button>
+                                <Dialog>
+                                  <DialogTrigger asChild>
+                                    <Button variant="ghost" size="icon" title="Xem chi tiết" className="h-8 w-8 text-muted-foreground hover:text-foreground">
+                                      <Eye size={16} />
+                                    </Button>
+                                  </DialogTrigger>
+                                  <DialogContent>
+                                    <DialogHeader>
+                                      <DialogTitle>Chi tiết thanh toán</DialogTitle>
+                                    </DialogHeader>
+                                    <div className="space-y-4 py-4">
+                                      <div className="flex items-center gap-4 border-b pb-4">
+                                        <div className="h-12 w-12 bg-primary/10 rounded-full flex items-center justify-center text-primary">
+                                          <FileText size={24} />
+                                        </div>
+                                        <div>
+                                          <h4 className="font-semibold text-lg">{payment.title}</h4>
+                                          <p className="text-muted-foreground text-sm">Mã HĐ: {payment.id}</p>
+                                        </div>
+                                      </div>
+                                      <div className="grid grid-cols-2 gap-y-4 text-sm">
+                                        <div>
+                                          <p className="text-muted-foreground">Trạng thái</p>
+                                          <Badge className={`${config.color} border-0 mt-1`}>{config.label}</Badge>
+                                        </div>
+                                        <div>
+                                          <p className="text-muted-foreground">Số tiền</p>
+                                          <p className="font-semibold text-lg text-primary">{payment.amount.toLocaleString('vi-VN')} VND</p>
+                                        </div>
+                                        <div>
+                                          <p className="text-muted-foreground">Phương thức</p>
+                                          <p className="font-medium mt-1">{methodLabel}</p>
+                                        </div>
+                                        <div>
+                                          <p className="text-muted-foreground">Ngày lập</p>
+                                          <p className="font-medium mt-1">{new Date(payment.createdAt).toLocaleDateString('vi-VN')}</p>
+                                        </div>
+                                        {payment.submittedAt && (
+                                          <div>
+                                            <p className="text-muted-foreground">Ngày thanh toán</p>
+                                            <p className="font-medium mt-1">{new Date(payment.submittedAt).toLocaleDateString('vi-VN')}</p>
+                                          </div>
+                                        )}
+                                        {payment.note && (
+                                          <div className="col-span-2">
+                                            <p className="text-muted-foreground">Ghi chú</p>
+                                            <p className="font-medium mt-1">{payment.note}</p>
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </DialogContent>
+                                </Dialog>
+
                                 {statusKey === 'paid' && (
-                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
+                                    <Button 
+                                      variant="ghost" 
+                                      size="icon" 
+                                      title="Tải biên lai" 
+                                      className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                                      onClick={() => {
+                                        toast({
+                                          title: "Thành công",
+                                          description: `Đang tải biên lai cho Hóa đơn ${payment.id}...`,
+                                        })
+                                      }}
+                                    >
                                     <Download size={16} />
                                     </Button>
                                 )}

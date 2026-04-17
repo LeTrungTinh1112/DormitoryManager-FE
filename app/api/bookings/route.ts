@@ -28,12 +28,19 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     
+    const currentUser = getCurrentUser();
+
     // Validate required fields
     if (!body.fullName || !body.phone || !body.roomType) {
       return NextResponse.json(
         { error: 'Thiếu thông tin bắt buộc' },
         { status: 400 }
       );
+    }
+    
+    if (currentUser) {
+      body.email = body.email || currentUser.email; 
+      body.phone = body.phone || currentUser.phone; // auto grab phone if missing
     }
 
     const newBooking = await addBooking(body);

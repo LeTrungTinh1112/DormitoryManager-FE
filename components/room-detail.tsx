@@ -2,6 +2,7 @@
 
 import React, { useState } from "react"
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { ImageSlideshow } from '@/components/image-slideshow'
@@ -44,6 +45,7 @@ interface RoomDetailProps {
 }
 
 export function RoomDetail({ room, relatedRooms }: RoomDetailProps) {
+  const router = useRouter()
   const { toast } = useToast()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -83,23 +85,63 @@ export function RoomDetail({ room, relatedRooms }: RoomDetailProps) {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+
+    const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null
+    if (!token) {
+      toast({
+        title: 'Yêu cầu đăng nhập',
+        description: 'Vui lòng đăng nhập để gửi yêu cầu thuê phòng',
+        variant: 'destructive',
+      })
+      router.push('/auth/login')
+      return
+    }
+
     if (!validateForm()) return
 
     setIsSubmitting(true)
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-    setIsSubmitting(false)
-    toast({
-      title: 'Đăng ký phòng thành công',
-      description: 'Yêu cầu của bạn đã được gửi. Chúng tôi sẽ liên hệ sớm nhất!',
-    })
+    
+    try {
+      const res = await fetch('/api/bookings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          roomId: room.id,
+          fullName: nameRef.current?.value,
+          phone: phoneRef.current?.value,
+          email: emailRef.current?.value,
+          notes: noteRef.current?.value,
+          roomType: room.type,
+          roomName: room.name,
+          userId: token
+        }),
+      })
 
-    // Reset form
-    if (nameRef.current) nameRef.current.value = ''
-    if (phoneRef.current) phoneRef.current.value = ''
-    if (emailRef.current) emailRef.current.value = ''
-    if (noteRef.current) noteRef.current.value = ''
-    setErrors({})
+      if (!res.ok) throw new Error('Có lỗi xảy ra')
+
+      toast({
+        title: 'Đăng ký phòng thành công',
+        description: 'Yêu cầu của bạn đã được gửi. Chúng tôi sẽ liên hệ sớm nhất!',
+      })
+
+      // Reset form
+      if (nameRef.current) nameRef.current.value = ''
+      if (phoneRef.current) phoneRef.current.value = ''
+      if (emailRef.current) emailRef.current.value = ''
+      if (noteRef.current) noteRef.current.value = ''
+      setErrors({})
+    } catch (error) {
+      console.error(error)
+      toast({
+        title: 'Lỗi',
+        description: 'Không thể gửi yêu cầu lúc này. Vui lòng thử lại sau.',
+        variant: 'destructive',
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (

@@ -98,6 +98,7 @@ export function DashboardSidebar({
     }
     localStorage.removeItem('auth_token')
     localStorage.removeItem('user_data')
+    localStorage.removeItem('room-favorites') // Xóa danh sách yêu thích
     document.cookie = 'auth_token=; path=/; max-age=0' // Xóa cookie ở phía client
     router.push('/')
     // Reload to refresh auth state
@@ -182,6 +183,7 @@ export function DashboardSidebar({
         { label: 'Yêu cầu thuê phòng', href: '/dashboard/manager/inquiries', icon: Users },
         { label: 'Duyệt thanh toán', href: '/dashboard/manager/payments', icon: BadgeCheck },
         { label: 'Quản lý hợp đồng', href: '/dashboard/manager/contracts', icon: ShieldCheck },
+        { label: 'Gửi thông báo', href: '/dashboard/manager/notifications', icon: Bell },
       ],
     }
   ] : []

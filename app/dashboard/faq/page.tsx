@@ -1,7 +1,5 @@
 'use client'
 
-import { Header } from '@/components/header'
-import { Footer } from '@/components/footer'
 import { Button } from '@/components/ui/button'
 import {
   Accordion,
@@ -145,7 +143,6 @@ export default function FaqPage() {
 
   return (
     <main className="min-h-screen flex flex-col bg-white">
-      <Header />
 
       {/* Page Header */}
       <section className="py-12 px-4 sm:px-6 lg:px-8 bg-card border-b border-border">
@@ -186,7 +183,6 @@ export default function FaqPage() {
         </div>
       </div>
 
-      <Footer />
     </main>
   )
 }
