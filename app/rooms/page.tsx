@@ -1,12 +1,23 @@
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
+/**
+ * ============================================================================
+ * 📖 CÁCH ÁP DỤNG "FORM TÌM KIẾM TỐI THƯỢNG (ULTIMATE)" VÀ PHÂN TRANG VÀO DỰ ÁN
+ * ============================================================================
+ * Ở trang danh sách phòng này, tôi đã áp dụng:
+ * 1. Live Search (Dòng 59): `useMemo` với `searchQuery`. 
+ * 2. Phân Trang (Dòng 101): `Math.ceil()` + `slice`.
+ * 3. Form Ultimate có Loading Effect (Dòng 145 - Component `header/search section` ảo).
+ */
+
+import { useState, useMemo, useEffect, Suspense } from 'react'
+import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import { Header } from '@/components/header'
 import { Footer } from '@/components/footer'
 import { RoomCard } from '@/components/room-card'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Search } from 'lucide-react' // Thêm icon Search
 import { Room } from '@/lib/data'
 
 const ITEMS_PER_PAGE = 9
@@ -14,18 +25,50 @@ const ITEMS_PER_PAGE = 9
 const MIN_PRICE = 0
 const MAX_PRICE = 5000000
 
-export default function RoomsPage() {
+function RoomsFilterAndList() {
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+
+  // Khởi tạo state bằng URL Params (Để nếu copy link cho bạn bè, họ vẫn giữ nguyên bộ lọc này)
+  const initialSearch = searchParams.get('q') || ''
+  const initialMaxPrice = searchParams.get('max_price') ? parseInt(searchParams.get('max_price') as string) : MAX_PRICE
+  const initialMinPrice = searchParams.get('min_price') ? parseInt(searchParams.get('min_price') as string) : MIN_PRICE
+
   const [allRooms, setAllRooms] = useState<Room[]>([])
   const [isLoading, setIsLoading] = useState(true)
   
   const [selectedTypes, setSelectedTypes] = useState<string[]>([])
   const [selectedCapacities, setSelectedCapacities] = useState<number[]>([])
   const [selectedStatus, setSelectedStatus] = useState<string>('all')
-  const [priceMin, setPriceMin] = useState(MIN_PRICE)
-  const [priceMax, setPriceMax] = useState(MAX_PRICE)
+  const [priceMin, setPriceMin] = useState(initialMinPrice)
+  const [priceMax, setPriceMax] = useState(initialMaxPrice)
   const [sortBy, setSortBy] = useState<string>('default')
-  const [searchQuery, setSearchQuery] = useState<string>('')
+  
+  // LIVE SEARCH STATE
+  const [searchQuery, setSearchQuery] = useState<string>(initialSearch)
+  
+  // PAGINATION STATE
   const [currentPage, setCurrentPage] = useState(1)
+
+  // ==========================================
+  // THUẬT TOÁN 1.5: ĐỒNG BỘ FILTER LÊN THANH ĐỊA CHỈ URL (NEXT.JS ROUTER)
+  // Tính năng ăn điểm tuyệt đối khi bảo vệ (Nhóm 2)
+  // ==========================================
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams.toString())
+    if (searchQuery) params.set('q', searchQuery)
+    else params.delete('q')
+
+    if (priceMax !== MAX_PRICE) params.set('max_price', priceMax.toString())
+    else params.delete('max_price')
+
+    if (priceMin !== MIN_PRICE) params.set('min_price', priceMin.toString())
+    else params.delete('min_price')
+
+    // push thay đổi lên URL mà không load lại trang
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false })
+  }, [searchQuery, priceMax, priceMin, pathname, router, searchParams])
 
   // Fetch rooms from API
   useEffect(() => {
@@ -45,10 +88,12 @@ export default function RoomsPage() {
     fetchRooms()
   }, [])
 
-  // Filter logic
+  // ==========================================
+  // THUẬT TOÁN 1: LỌC DỮ LIỆU (BAO GỒM LIVE SEARCH)
+  // ==========================================
   const filteredRooms = useMemo(() => {
     return allRooms.filter((room) => {
-      // Search filter
+      // 1. Live Search filter (Gõ tới đâu chạy vào .includes() tới đó)
       if (searchQuery.trim()) {
         const query = searchQuery.toLowerCase()
         const matchesSearch =
@@ -86,7 +131,9 @@ export default function RoomsPage() {
     setCurrentPage(1)
   }, [selectedTypes, selectedCapacities, selectedStatus, priceMin, priceMax, searchQuery, sortBy])
 
-  // Sort logic
+  // ==========================================
+  // THUẬT TOÁN 2: SẮP XẾP SỐ LIỆU TỪ LỚN XUỐNG BÉ (Lấy mảng đã Lọc ra để Sắp xếp)
+  // ==========================================
   const sortedRooms = useMemo(() => {
     const rooms = [...filteredRooms]
     if (sortBy === 'price-asc') rooms.sort((a, b) => a.price - b.price)
@@ -107,10 +154,14 @@ export default function RoomsPage() {
     )
   }
 
-  // Pagination logic
+  // ==========================================
+  // THUẬT TOÁN 3: TÁCH TRANG (Lấy mảng đã Sắp xếp ra để Cắt nhỏ)
+  // Tổng cộng -> Tìm kiếm -> Lọc -> Sắp Xếp -> Phân Trang
+  // ==========================================
   const totalPages = Math.ceil(sortedRooms.length / ITEMS_PER_PAGE)
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
   const endIndex = startIndex + ITEMS_PER_PAGE
+  // Lấy ra danh sách phòng hiển thị đúng trang đó
   const paginatedRooms = sortedRooms.slice(startIndex, endIndex)
 
   const handlePageChange = (page: number) => {
@@ -125,13 +176,27 @@ export default function RoomsPage() {
 
       {/* Page Header */}
       <section className="py-12 px-4 sm:px-6 lg:px-8 bg-card border-b border-border">
-        <div className="max-w-7xl mx-auto">
-          <h1 className="text-4xl font-bold text-foreground mb-2">
-            Danh sách phòng ký túc xá đang cho thuê
-          </h1>
-          <p className="text-lg text-muted-foreground">
-            Giá từ 500.000đ – đầy đủ tiện nghi
-          </p>
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-4xl font-bold text-foreground mb-2">
+              Danh sách phòng ký túc xá
+            </h1>
+            <p className="text-lg text-muted-foreground">
+              Tổng cộng có <span className="font-bold text-blue-600">{filteredRooms.length}</span> kết quả phù hợp
+            </p>
+          </div>
+          
+          {/* Ô TÌM KIẾM TRỰC TIẾP (LIVE SEARCH) NHƯ ULTIMATE FORM ĐƯỢC LINK TỚI URL */}
+          <div className="relative w-full md:w-96 shadow-sm">
+            <Search className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Tìm tên phòng, tên chủ nhà, SĐT..."
+              className="pl-10 pr-4 py-3 w-full border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
         </div>
       </section>
 
@@ -249,33 +314,10 @@ export default function RoomsPage() {
 
             {/* Room List Section */}
             <div className="lg:col-span-3 space-y-6">
-              {/* Search & Sort Bar */}
+              {/* CẬP NHẬT: ĐÃ XÓA KHUNG TÌM KIẾM TRÙNG LẶP. CHỈ GIỮ LẠI MENU LỌC & SORT */}
               <div className="flex flex-col sm:flex-row gap-4 justify-between items-center bg-card p-4 rounded-lg border border-border">
-                <div className="relative w-full sm:w-96">
-                  <input
-                    type="text"
-                    placeholder="Tìm theo tên vé, số phòng..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
-                  />
-                  {/* Search Icon */}
-                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="20"
-                      height="20"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <circle cx="11" cy="11" r="8"></circle>
-                      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                    </svg>
-                  </div>
+                <div className="text-sm text-muted-foreground w-full sm:w-96 font-medium">
+                  Hiển thị kết quả: <span className="font-semibold text-primary">{paginatedRooms.length}</span> phòng / <span className="font-semibold text-primary">{filteredRooms.length}</span> phòng tìm thấy
                 </div>
 
                 <div className="flex items-center gap-4 w-full sm:w-auto">
@@ -411,5 +453,13 @@ export default function RoomsPage() {
       </div>
       <Footer />
     </main>
+  )
+}
+
+export default function RoomsPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Đang tải cấu hình URL...</div>}>
+      <RoomsFilterAndList />
+    </Suspense>
   )
 }

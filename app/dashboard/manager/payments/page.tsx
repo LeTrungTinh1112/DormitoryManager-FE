@@ -1,7 +1,7 @@
 
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -56,6 +56,10 @@ export default function ManagerPaymentsPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null)
   
+  // STATE & LOGIC: BẢNG TƯƠNG TÁC (INTERACTIVE TABLE) - CHỌN/XÓA HÀNG LOẠT
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const [searchQuery, setSearchQuery] = useState('')
+
   useEffect(() => {
     fetchPayments()
   }, [])
@@ -65,6 +69,7 @@ export default function ManagerPaymentsPage() {
       const res = await fetch('/api/payments')
       const data = await res.json()
       setPayments(data.data || [])
+      setSelectedIds([]) // Reset chọn khi data mới load
     } catch (error) {
       console.error(error)
       toast.error("Không thể tải danh sách hóa đơn")
@@ -72,6 +77,77 @@ export default function ManagerPaymentsPage() {
       setIsLoading(false)
     }
   }
+
+  // ==========================================
+  // THUẬT TOÁN 1: LIVE SEARCH TRÊN BẢNG GIỐNG NHƯ FILE EXAM-TEST
+  // ==========================================
+  const filteredPayments = useMemo(() => {
+    if (!searchQuery.trim()) return payments;
+    return payments.filter((payment) =>
+      payment.userName.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      payment.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      payment.title.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [payments, searchQuery]);
+
+  // ==========================================
+  // THUẬT TOÁN 2: CHỨC NĂNG CHECKBOX XẢ PHẲNG TỪ BÀI THỰC HÀNH
+  // ==========================================
+  // Cờ: true nếu TẤT CẢ các dòng THỎA MÃN TÌM KIẾM đều được click chọn
+  const isAllSelected = filteredPayments.length > 0 && selectedIds.length === filteredPayments.length;
+  const hasSelection = selectedIds.length > 0;
+
+  const handleToggleAll = () => {
+    if (isAllSelected) {
+      // Đang chọn hết -> Click cái thành Hủy
+      setSelectedIds([]); 
+    } else {
+      // Nhờ dùng filteredPayments mà ta chỉ bốc các ID của những người thỏa mãn ô tìm kiếm
+      setSelectedIds(filteredPayments.map((p) => p.id)); 
+    }
+  };
+
+  const handleSelectOne = (id: string) => {
+    if (selectedIds.includes(id)) {
+      setSelectedIds(selectedIds.filter((selectedId) => selectedId !== id));
+    } else {
+      setSelectedIds([...selectedIds, id]);
+    }
+  };
+
+  // ==========================================
+  // THUẬT TOÁN 3: DUYỆT THU TIỀN HÀNG LOẠT (BULK APPROVE) 
+  // Nút này disable nếu selectedIds rỗng
+  // ==========================================
+  const handleBulkApprove = async () => {
+    const confirm = window.confirm(`Bạn có chắc chắn muốn XÁC NHẬN THU TIỀN ${selectedIds.length} giao dịch đã chọn không?`);
+    if (confirm) {
+      try {
+        // Map chạy vòng lặp call API liên tục cho các ID được chọn (như trong bài thi Admin)
+        await Promise.all(
+          selectedIds.map(async (id) => {
+            const payment = payments.find(p => p.id === id);
+            if (!payment) return;
+            await fetch('/api/payments', {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                  id: id,
+                  action: 'update_status',
+                  status: 'paid',
+                  role: 'manager',
+                  userId: payment.userId
+              })
+            })
+          })
+        );
+        toast.success(`Đã nhận tiền ${selectedIds.length} hóa đơn thành công!`);
+        fetchPayments();
+      } catch (error) {
+        toast.error("Có lỗi xảy ra trong quá trình thu tiền tự động");
+      }
+    }
+  };
 
   const handleUpdateStatus = async (status: 'paid' | 'rejected') => {
     if (!selectedPayment) return;
@@ -103,23 +179,59 @@ export default function ManagerPaymentsPage() {
   
   return (
     <div className="p-6 space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
             <h1 className="text-3xl font-bold tracking-tight">Quản lý thanh toán</h1>
-            <p className="text-muted-foreground">Duyệt minh chứng và quản lý thu phí.</p>
+            <p className="text-muted-foreground">Duyệt minh chứng và quản lý thu phí sinh viên.</p>
         </div>
-        <Button>+ Tạo khoản phí mới</Button>
+        
+        {/* Nút chức năng chọn nhiều - Ứng dụng bài InteractiveTable */}
+        <div className="flex items-center gap-2">
+          {hasSelection && (
+            <Button 
+              className="bg-green-600 hover:bg-green-700"
+              onClick={handleBulkApprove}
+            >
+              Thu tiền hàng loạt ({selectedIds.length})
+            </Button>
+          )}
+          <Button variant="outline">+ Tạo khoản phí mới</Button>
+        </div>
       </div>
 
       <Card>
         <CardHeader>
-            <CardTitle>Danh sách giao dịch</CardTitle>
-            <CardDescription>Các khoản thanh toán gần đây từ cư dân.</CardDescription>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <CardTitle>Danh sách giao dịch</CardTitle>
+                <CardDescription>Các khoản thanh toán gần đây từ cư dân. Đã tích hợp Live Search.</CardDescription>
+              </div>
+              
+              {/* KHU VỰC LIVE SEARCH BẢNG */}
+              <div className="relative w-full sm:w-64">
+                <input
+                  type="text"
+                  placeholder="Tra mã HĐ, SV, Khoản thu..."
+                  className="px-3 py-2 w-full border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+            </div>
         </CardHeader>
         <CardContent>
             <Table>
                 <TableHeader>
                     <TableRow>
+                        {/* Cột Tích tất cả */}
+                        <TableHead className="w-[50px]">
+                            <input
+                              type="checkbox"
+                              className="w-4 h-4 rounded cursor-pointer accent-primary"
+                              checked={isAllSelected}
+                              onChange={handleToggleAll}
+                            />
+                        </TableHead>
                         <TableHead>Mã</TableHead>
                         <TableHead>Cư dân</TableHead>
                         <TableHead>Khoản phí</TableHead>
@@ -130,32 +242,49 @@ export default function ManagerPaymentsPage() {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {payments.map((payment) => (
-                        <TableRow key={payment.id}>
-                            <TableCell className="font-mono text-xs">{payment.id}</TableCell>
-                            <TableCell>
-                                <div className="font-medium">{payment.userName}</div>
-                                <div className="text-xs text-muted-foreground">{payment.userId}</div>
-                            </TableCell>
-                            <TableCell>{payment.title}</TableCell>
-                            <TableCell className="font-bold">{payment.amount.toLocaleString('vi-VN')} đ</TableCell>
-                            <TableCell>
-                                <Badge variant="secondary" className={statusConfig[payment.status].color}>
-                                    {statusConfig[payment.status].label}
-                                </Badge>
-                            </TableCell>
-                            <TableCell>
-                                {payment.submittedAt ? new Date(payment.submittedAt).toLocaleDateString('vi-VN') : '-'}
-                            </TableCell>
-                            <TableCell className="text-right">
-                                <Dialog>
-                                    <DialogTrigger asChild>
-                                        <Button variant="ghost" size="icon" onClick={() => setSelectedPayment(payment)}>
-                                            <Eye className="h-4 w-4" />
-                                        </Button>
-                                    </DialogTrigger>
-                                    <DialogContent className="sm:max-w-150">
-                                        <DialogHeader>
+                    {filteredPayments.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={8} className="text-center h-24 text-muted-foreground">
+                            Không tìm thấy dữ liệu thanh toán nào 
+                          </TableCell>
+                        </TableRow>
+                    ) : (
+                      filteredPayments.map((payment) => (
+                          <TableRow key={payment.id}>
+                              <TableCell>
+                                  <input
+                                    type="checkbox"
+                                    className="w-4 h-4 rounded cursor-pointer accent-primary"
+                                    checked={selectedIds.includes(payment.id)}
+                                    // Chặn tick với các giao dịch đỏ hoặc xanh lặp lại
+                                    disabled={payment.status === 'paid' || payment.status === 'rejected'}
+                                    onChange={() => handleSelectOne(payment.id)}
+                                  />
+                              </TableCell>
+                              <TableCell className="font-mono text-xs text-muted-foreground">{payment.id.split('-')[0]}</TableCell>
+                              <TableCell>
+                                  <div className="font-medium">{payment.userName}</div>
+                                  <div className="text-xs text-muted-foreground truncate w-24">{payment.userId}</div>
+                              </TableCell>
+                              <TableCell className="max-w-[150px] truncate">{payment.title}</TableCell>
+                              <TableCell className="font-bold whitespace-nowrap">{payment.amount.toLocaleString('vi-VN')} đ</TableCell>
+                              <TableCell>
+                                  <Badge variant="secondary" className={`whitespace-nowrap ${statusConfig[payment.status].color}`}>
+                                      {statusConfig[payment.status].label}
+                                  </Badge>
+                              </TableCell>
+                              <TableCell className="whitespace-nowrap text-muted-foreground text-sm">
+                                  {payment.submittedAt ? new Date(payment.submittedAt).toLocaleDateString('vi-VN') : '-'}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                  <Dialog>
+                                      <DialogTrigger asChild>
+                                          <Button variant="ghost" size="sm" onClick={() => setSelectedPayment(payment)}>
+                                              Chi tiết
+                                          </Button>
+                                      </DialogTrigger>
+                                      <DialogContent className="sm:max-w-150">
+                                          <DialogHeader>
                                             <DialogTitle>Chi tiết thanh toán</DialogTitle>
                                             <DialogDescription>
                                                 Kiểm tra thông tin và minh chứng chuyển khoản.
@@ -212,7 +341,8 @@ export default function ManagerPaymentsPage() {
                                 </Dialog>
                             </TableCell>
                         </TableRow>
-                    ))}
+                      ))
+                    )}
                 </TableBody>
             </Table>
         </CardContent>

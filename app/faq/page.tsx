@@ -1,5 +1,6 @@
 'use client'
 
+import { Suspense } from 'react'
 import { Header } from '@/components/header'
 import { Footer } from '@/components/footer'
 import { Button } from '@/components/ui/button'
@@ -10,6 +11,7 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion'
 import Link from 'next/link'
+import AdvancedTeacherSearchForm from '@/components/exam-practice/AdvancedTeacherSearchForm'
 
 const faqData = [
   {
@@ -156,6 +158,12 @@ export default function FaqPage() {
           </p>
         </div>
       </section>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
+        <Suspense fallback={<div>Đang tải form...</div>}>
+          <AdvancedTeacherSearchForm />
+        </Suspense>
+      </div>
 
       {/* FAQ Content */}
       <div className="flex-1 py-16 px-4 sm:px-6 lg:px-8">

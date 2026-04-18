@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import {
     Table,
     TableBody,
@@ -61,6 +61,9 @@ export default function ManagerContractsPage() {
     const [currentContract, setCurrentContract] = useState<Partial<Contract>>({})
     const [contractToDelete, setContractToDelete] = useState<string | null>(null)
 
+    // CHECKBOX STATE CHO VIỆC XÓA HÀNG LOẠT
+    const [selectedIds, setSelectedIds] = useState<string[]>([])
+
     useEffect(() => {
         fetchContracts()
     }, [])
@@ -71,6 +74,7 @@ export default function ManagerContractsPage() {
             const data = await res.json()
             if (data.data) {
                 setContracts(data.data)
+                setSelectedIds([]) // Reset chọn mỗi khi load lại danh sách
             }
         } catch (error) {
             console.error('Failed to fetch contracts:', error)
@@ -166,11 +170,57 @@ export default function ManagerContractsPage() {
         }
     }
 
-    const filteredContracts = contracts.filter(contract =>
-        contract.studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        contract.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        contract.roomName.toLowerCase().includes(searchTerm.toLowerCase())
-    )
+    // ==========================================
+    // THUẬT TOÁN 1: LIVE SEARCH TRÊN BẢNG BẰNG USEMEMO
+    // ==========================================
+    const filteredContracts = useMemo(() => {
+        if (!searchTerm.trim()) return contracts;
+        return contracts.filter(contract =>
+            contract.studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            contract.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            contract.roomName.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+    }, [contracts, searchTerm]);
+
+    // ==========================================
+    // THUẬT TOÁN 2: CHỨC NĂNG CHECKBOX XẢ PHẲNG
+    // ==========================================
+    const isAllSelected = filteredContracts.length > 0 && selectedIds.length === filteredContracts.length;
+    const hasSelection = selectedIds.length > 0;
+
+    const handleToggleAll = () => {
+        if (isAllSelected) {
+            setSelectedIds([]); 
+        } else {
+            setSelectedIds(filteredContracts.map((c) => c.id)); 
+        }
+    };
+
+    const handleSelectOne = (id: string) => {
+        if (selectedIds.includes(id)) {
+            setSelectedIds(selectedIds.filter((selectedId) => selectedId !== id));
+        } else {
+            setSelectedIds([...selectedIds, id]);
+        }
+    };
+
+    // ==========================================
+    // THUẬT TOÁN 3: XÓA HÀNG LOẠT (BULK DELETE)
+    // ==========================================
+    const handleBulkDelete = async () => {
+        const confirm = window.confirm(`Bạn có chắc chắn muốn TỰ ĐỘNG HỦY ${selectedIds.length} hợp đồng đã chọn không?`);
+        if (confirm) {
+            try {
+                await Promise.all(
+                    selectedIds.map(id => fetch(`/api/manager/contracts?id=${id}`, { method: 'DELETE' }))
+                );
+                toast.success(`Đã hủy/xóa thành công ${selectedIds.length} hợp đồng!`);
+                fetchContracts();
+            } catch (error) {
+                toast.error("Có lỗi xảy ra khi xử lý hủy hợp đồng hàng loạt!");
+            }
+        }
+    };
 
     const isViewMode = dialogMode === 'view';
 
@@ -206,6 +256,12 @@ export default function ManagerContractsPage() {
                     <p className="text-muted-foreground">Danh sách tất cả hợp đồng thuê phòng của cư dân</p>
                 </div>
                 <div className="flex items-center gap-2">
+                    {/* BỔ SUNG NÚT XÓA HÀNG LOẠT TỪ EXAM-PRACTICE */}
+                    {hasSelection && (
+                        <Button variant="destructive" onClick={handleBulkDelete}>
+                            Xóa hợp đồng ({selectedIds.length})
+                        </Button>
+                    )}
                     <Button variant="outline" className="gap-2">
                         <Download size={16} />
                         Xuất Excel
@@ -218,11 +274,11 @@ export default function ManagerContractsPage() {
             </div>
 
             {/* Filters */}
-            <div className="flex items-center gap-4 bg-white p-4 rounded-lg border shadow-sm">
+            <div className="flex items-center justify-between gap-4 bg-white p-4 rounded-lg border shadow-sm">
                 <div className="relative flex-1 max-w-sm">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
-                        placeholder="Tìm theo tên, mã HĐ, phòng..."
+                        placeholder="Live Search: Tra tên, HĐ, phòng..."
                         className="pl-9"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
@@ -238,6 +294,15 @@ export default function ManagerContractsPage() {
                 <Table>
                     <TableHeader>
                         <TableRow className="bg-muted/50">
+                            {/* BỔ SUNG CỘT CHECKBOX TẤT CẢ CHO BẢNG */}
+                            <TableHead className="w-[50px] text-center">
+                                <input
+                                    type="checkbox"
+                                    className="w-4 h-4 cursor-pointer accent-primary rounded"
+                                    checked={isAllSelected}
+                                    onChange={handleToggleAll}
+                                />
+                            </TableHead>
                             <TableHead className="w-[100px]">Mã HĐ</TableHead>
                             <TableHead>Khách hàng</TableHead>
                             <TableHead>Liên hệ</TableHead>
@@ -250,15 +315,23 @@ export default function ManagerContractsPage() {
                     <TableBody>
                         {loading ? (
                             <TableRow>
-                                <TableCell colSpan={7} className="h-24 text-center">Đang tải...</TableCell>
+                                <TableCell colSpan={8} className="h-24 text-center">Đang tải...</TableCell>
                             </TableRow>
                         ) : filteredContracts.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">Không tìm thấy hợp đồng nào</TableCell>
+                                <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">Không tìm thấy hợp đồng nào</TableCell>
                             </TableRow>
                         ) : (
                             filteredContracts.map((contract) => (
                                 <TableRow key={contract.id}>
+                                    <TableCell className="text-center">
+                                        <input
+                                            type="checkbox"
+                                            className="w-4 h-4 cursor-pointer accent-primary rounded"
+                                            checked={selectedIds.includes(contract.id)}
+                                            onChange={() => handleSelectOne(contract.id)}
+                                        />
+                                    </TableCell>
                                     <TableCell className="font-medium">{contract.id}</TableCell>
                                     <TableCell>
                                         <div className="font-medium">{contract.studentName}</div>
